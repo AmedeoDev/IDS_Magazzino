@@ -5,6 +5,8 @@ import it.unina.magazzino.boundary.utils.StyleWMS;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class ReportBug extends JFrame {
 
@@ -95,13 +97,25 @@ public class ReportBug extends JFrame {
 
         form.add(Box.createVerticalStrut(24));
 
-        /* Bottone */
+        /* Bottone con Animazione Hover */
         btnInvia = new JButton("Invia segnalazione"){
+            private boolean hovered = false;
+
+            // Blocco di inizializzazione per aggiungere il listener dell'animazione
+            {
+                addMouseListener(new MouseAdapter() {
+                    @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    @Override public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
+                });
+            }
+
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getBackground());
+
+                // Cambia dinamicamente lo sfondo: BLU_ACCIAIO se hovered, altrimenti BLU_MEDIO
+                g2.setColor(hovered ? StyleWMS.BLU_ACCIAIO : StyleWMS.BLU_MEDIO);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
                 g2.dispose();
                 super.paintComponent(g);
@@ -112,7 +126,7 @@ public class ReportBug extends JFrame {
         btnInvia.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         btnInvia.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnInvia.setBackground(StyleWMS.BLU_MEDIO);
-        btnInvia.setForeground(StyleWMS.BIANCO); // Testo bianco per contrasto
+        btnInvia.setForeground(StyleWMS.BIANCO);
         btnInvia.setFocusPainted(false);
         btnInvia.setBorderPainted(false);
         btnInvia.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));

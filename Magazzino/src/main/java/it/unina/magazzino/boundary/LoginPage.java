@@ -68,13 +68,24 @@ public class LoginPage extends JFrame {
 
         form.add(Box.createVerticalStrut(28));
 
-        // Bottone con BLU_MEDIO
+        // Bottone con Animazione Hover
         btnAccedi = new JButton("Accedi") {
+            private boolean hovered = false;
+
+            {
+                addMouseListener(new MouseAdapter() {
+                    @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    @Override public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
+                });
+            }
+
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getBackground());
+
+                // Sfondo dinamico al passaggio del mouse
+                g2.setColor(hovered ? StyleWMS.BLU_ACCIAIO : StyleWMS.BLU_MEDIO);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
                 g2.dispose();
                 super.paintComponent(g);
@@ -85,7 +96,7 @@ public class LoginPage extends JFrame {
         btnAccedi.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         btnAccedi.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnAccedi.setBackground(StyleWMS.BLU_MEDIO);
-        btnAccedi.setForeground(StyleWMS.BIANCO); // Sostituito BLACK con BIANCO per contrasto sul blu
+        btnAccedi.setForeground(StyleWMS.BIANCO);
         btnAccedi.setFocusPainted(false);
         btnAccedi.setBorderPainted(false);
         btnAccedi.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -108,7 +119,18 @@ public class LoginPage extends JFrame {
         lblLink.setForeground(StyleWMS.BLU_MEDIO);
         lblLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
+        // Hover effect e click per il link
         lblLink.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                lblLink.setForeground(StyleWMS.BLU_ACCIAIO);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                lblLink.setForeground(StyleWMS.BLU_MEDIO);
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 dispose();

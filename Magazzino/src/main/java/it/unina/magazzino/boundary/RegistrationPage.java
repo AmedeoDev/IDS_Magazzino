@@ -107,13 +107,24 @@ public class RegistrationPage extends JFrame {
 
         form.add(Box.createVerticalStrut(24));
 
-        // Bottone con BLU_MEDIO
+        // Bottone con Animazione Hover
         btnRegistrati = new JButton("Registrati") {
+            private boolean hovered = false;
+
+            {
+                addMouseListener(new MouseAdapter() {
+                    @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    @Override public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
+                });
+            }
+
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(getBackground());
+
+                // Sfondo dinamico: BLU_ACCIAIO al passaggio del mouse
+                g2.setColor(hovered ? StyleWMS.BLU_ACCIAIO : StyleWMS.BLU_MEDIO);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
                 g2.dispose();
                 super.paintComponent(g);
@@ -124,7 +135,7 @@ public class RegistrationPage extends JFrame {
         btnRegistrati.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         btnRegistrati.setFont(new Font("Segoe UI", Font.BOLD, 14));
         btnRegistrati.setBackground(StyleWMS.BLU_MEDIO);
-        btnRegistrati.setForeground(StyleWMS.BIANCO); // Sostituito BLACK con BIANCO per leggibilità sul blu scuro
+        btnRegistrati.setForeground(StyleWMS.BIANCO);
         btnRegistrati.setFocusPainted(false);
         btnRegistrati.setBorderPainted(false);
         btnRegistrati.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -147,7 +158,18 @@ public class RegistrationPage extends JFrame {
         lblLink.setForeground(StyleWMS.BLU_MEDIO);
         lblLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
+        // Hover effect e click per il link di login
         lblLink.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                lblLink.setForeground(StyleWMS.BLU_ACCIAIO);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                lblLink.setForeground(StyleWMS.BLU_MEDIO);
+            }
+
             @Override
             public void mouseClicked(MouseEvent e) {
                 dispose();
@@ -176,7 +198,7 @@ public class RegistrationPage extends JFrame {
     private JLabel label(String testo) {
         JLabel l = new JLabel(testo);
         l.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        l.setForeground(StyleWMS.ANTRACITE); // Colore scuro per i testi delle label
+        l.setForeground(StyleWMS.ANTRACITE);
         l.setAlignmentX(Component.LEFT_ALIGNMENT);
         return l;
     }
@@ -186,7 +208,7 @@ public class RegistrationPage extends JFrame {
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
         c.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         c.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(StyleWMS.AZZURRO_LIGHT), // Bordo chiaro coordinato
+                BorderFactory.createLineBorder(StyleWMS.AZZURRO_LIGHT),
                 BorderFactory.createEmptyBorder(4, 8, 4, 8)));
     }
 
