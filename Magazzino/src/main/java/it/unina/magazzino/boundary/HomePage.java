@@ -1,10 +1,14 @@
 package it.unina.magazzino.boundary;
 
+import it.unina.magazzino.boundary.LoginPage;
+import it.unina.magazzino.boundary.RegistrationPage;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
+
 
 public class HomePage extends JFrame {
 
@@ -160,13 +164,19 @@ public class HomePage extends JFrame {
         return p;
     }
 
-    // ── fase di testing...
+    // ── fase di testing : completata -> file presenti e le pagine si aprono correttamente
     private void onAccedi() {
-        JOptionPane.showMessageDialog(this, "TESTING...");
+        this.dispose();
+
+        LoginPage loginPage = new LoginPage();
+        loginPage.setVisible(true);
     }
 
     private void onRegistrati() {
-        JOptionPane.showMessageDialog(this, "TESTING...");
+        this.dispose();
+
+        RegistrationPage registrationPage = new RegistrationPage();
+        registrationPage.setVisible(true);
     }
 
     // ── Bottone arrotondato custom ──
