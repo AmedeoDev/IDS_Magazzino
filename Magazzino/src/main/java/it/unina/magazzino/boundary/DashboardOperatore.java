@@ -20,7 +20,7 @@ public class DashboardOperatore extends JFrame {
     /**
      * @param nomeUtente  Nome completo dell'operatore (es. "Mario Rossi")
      * @param logoPath    Percorso al file immagine del logo (es. "assets/logo.png").
-     *                    Con null ottengo il badge testuale "WMS" come fallback.
+     * Con null ottengo il badge testuale "WMS" come fallback.
      */
     public DashboardOperatore(String nomeUtente, String logoPath) {
         setTitle("Dashboard Operatore — " + nomeUtente);
@@ -360,10 +360,12 @@ public class DashboardOperatore extends JFrame {
         visualizzaStorico.setVisible(true);
     }
 
-
-
-    private void onOperazioni() { JOptionPane.showMessageDialog(this, "Apri schermata operazioni."); }
-
+    // Collegamento effettuato alla classe EffettuaOperazioni
+    private void onOperazioni() {
+        this.dispose();
+        EffettuaOperazioni effettuaOperazioni = new EffettuaOperazioni();
+        effettuaOperazioni.setVisible(true);
+    }
 
     private void onReport(){
         this.dispose();
@@ -399,10 +401,8 @@ public class DashboardOperatore extends JFrame {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
             catch (Exception ignored) {}
 
-            // Primo argomento: nome utente
-            // Secondo argomento: percorso logo (null = badge testuale)
             String nomeUtente = args.length > 0 ? args[0] : "Mario Rossi";
-            String logoPath   = args.length > 1 ? args[1] : null; // es. "assets/logo.png"
+            String logoPath   = args.length > 1 ? args[1] : null;
 
             new DashboardOperatore(nomeUtente, logoPath).setVisible(true);
         });
