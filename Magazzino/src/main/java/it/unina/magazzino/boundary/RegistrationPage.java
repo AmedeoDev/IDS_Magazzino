@@ -1,8 +1,12 @@
 package it.unina.magazzino.boundary;
 
+import it.unina.magazzino.boundary.utils.StyleWMS;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class RegistrationPage extends JFrame {
 
@@ -17,29 +21,29 @@ public class RegistrationPage extends JFrame {
     public RegistrationPage() {
 
         setTitle("WMS PRO – Registrazione");
-        setSize(420, 600);
+        setSize(420, 640);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
         /* ── Sfondo generale ── */
         JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(Color.WHITE);
+        root.setBackground(StyleWMS.BIANCO);
 
-        // Header blu
+        // Header con BLU_ACCIAIO
         JPanel header = new JPanel();
-        header.setBackground(new Color(30, 136, 229));
+        header.setBackground(StyleWMS.BLU_ACCIAIO);
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setBorder(new EmptyBorder(30, 0, 30, 0));
 
         JLabel titolo = new JLabel("WMS PRO", SwingConstants.CENTER);
         titolo.setFont(new Font("Segoe UI", Font.BOLD, 30));
-        titolo.setForeground(Color.WHITE);
+        titolo.setForeground(StyleWMS.BIANCO);
         titolo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel sub = new JLabel("Crea il tuo account", SwingConstants.CENTER);
         sub.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        sub.setForeground(new Color(210, 230, 255));
+        sub.setForeground(StyleWMS.AZZURRO_LIGHT);
         sub.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         header.add(titolo);
@@ -48,7 +52,7 @@ public class RegistrationPage extends JFrame {
 
         // Form centrale
         JPanel form = new JPanel();
-        form.setBackground(Color.WHITE);
+        form.setBackground(StyleWMS.BIANCO);
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
         form.setBorder(new EmptyBorder(28, 50, 28, 50));
 
@@ -98,32 +102,62 @@ public class RegistrationPage extends JFrame {
         cmbRuolo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cmbRuolo.setAlignmentX(Component.LEFT_ALIGNMENT);
         cmbRuolo.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
-        cmbRuolo.setBackground(Color.WHITE);
+        cmbRuolo.setBackground(StyleWMS.BIANCO);
         form.add(cmbRuolo);
 
         form.add(Box.createVerticalStrut(24));
 
+        // Bottone con BLU_MEDIO
         btnRegistrati = new JButton("Registrati") {
-        @Override
-        protected void paintComponent(Graphics g) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground());
-            // 20 è il raggio dell'arco di curvatura
-            g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
-            g2.dispose();
-            super.paintComponent(g);
-        }
-    };
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        btnRegistrati.setContentAreaFilled(false);
         btnRegistrati.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnRegistrati.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         btnRegistrati.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnRegistrati.setBackground(new Color(30, 136, 229));
-        btnRegistrati.setForeground(Color.BLACK);
+        btnRegistrati.setBackground(StyleWMS.BLU_MEDIO);
+        btnRegistrati.setForeground(StyleWMS.BIANCO); // Sostituito BLACK con BIANCO per leggibilità sul blu scuro
         btnRegistrati.setFocusPainted(false);
         btnRegistrati.setBorderPainted(false);
         btnRegistrati.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         form.add(btnRegistrati);
+
+        form.add(Box.createVerticalStrut(15));
+
+        // Frase di reindirizzamento al Login
+        JPanel pnlLogin = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        pnlLogin.setBackground(StyleWMS.BIANCO);
+        pnlLogin.setAlignmentX(Component.LEFT_ALIGNMENT);
+        pnlLogin.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+
+        JLabel lblFrase = new JLabel("Hai già un account? ");
+        lblFrase.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblFrase.setForeground(StyleWMS.GRIGIO_TESTO);
+
+        JLabel lblLink = new JLabel("<html><u>Effettua il Login</u></html>");
+        lblLink.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblLink.setForeground(StyleWMS.BLU_MEDIO);
+        lblLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        lblLink.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                dispose();
+                new LoginPage().setVisible(true);
+            }
+        });
+
+        pnlLogin.add(lblFrase);
+        pnlLogin.add(lblLink);
+        form.add(pnlLogin);
 
         // Assemblaggio
         JScrollPane scroll = new JScrollPane(form);
@@ -134,28 +168,25 @@ public class RegistrationPage extends JFrame {
         root.add(scroll, BorderLayout.CENTER);
         setContentPane(root);
 
-        /* ── Listener (solo estetico: mostra dialog) ── */
         btnRegistrati.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Registrazione premuta!") //da sostituire con l'effettivo collegamento
+                JOptionPane.showMessageDialog(this, "Registrazione premuta!")
         );
     }
 
-    /* Label sopra ogni campo */
     private JLabel label(String testo) {
         JLabel l = new JLabel(testo);
         l.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        l.setForeground(new Color(60, 60, 60));
+        l.setForeground(StyleWMS.ANTRACITE); // Colore scuro per i testi delle label
         l.setAlignmentX(Component.LEFT_ALIGNMENT);
         return l;
     }
 
-    /* Stile uniforme per TextField e PasswordField */
     private void stilizza(JTextField c) {
         c.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
         c.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         c.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createLineBorder(StyleWMS.AZZURRO_LIGHT), // Bordo chiaro coordinato
                 BorderFactory.createEmptyBorder(4, 8, 4, 8)));
     }
 

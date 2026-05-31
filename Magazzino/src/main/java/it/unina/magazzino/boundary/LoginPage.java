@@ -1,8 +1,12 @@
 package it.unina.magazzino.boundary;
 
+import it.unina.magazzino.boundary.utils.StyleWMS;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class LoginPage extends JFrame {
 
@@ -13,40 +17,40 @@ public class LoginPage extends JFrame {
     public LoginPage() {
 
         setTitle("WMS PRO – Login");
-        setSize(420, 450);
+        setSize(420, 480);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
         // Sfondo generale
         JPanel root = new JPanel(new BorderLayout());
-        root.setBackground(Color.WHITE);
+        root.setBackground(StyleWMS.BIANCO);
 
-        // Header blu
+        // Header con BLU_ACCIAIO
         JPanel header = new JPanel();
-        header.setBackground(new Color(30, 136, 229));
+        header.setBackground(StyleWMS.BLU_ACCIAIO);
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
         header.setBorder(new EmptyBorder(30, 0, 30, 0));
 
         JLabel titolo = new JLabel("WMS PRO", SwingConstants.CENTER);
         titolo.setFont(new Font("Segoe UI", Font.BOLD, 30));
-        titolo.setForeground(Color.WHITE);
+        titolo.setForeground(StyleWMS.BIANCO);
         titolo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel sub = new JLabel("Accedi al tuo account", SwingConstants.CENTER);
         sub.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        sub.setForeground(new Color(210, 230, 255));
+        sub.setForeground(StyleWMS.AZZURRO_LIGHT);
         sub.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         header.add(titolo);
         header.add(Box.createVerticalStrut(6));
         header.add(sub);
 
-        //Form centrale
+        // Form centrale
         JPanel form = new JPanel();
-        form.setBackground(Color.WHITE);
+        form.setBackground(StyleWMS.BIANCO);
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
-        form.setBorder(new EmptyBorder(35, 50, 35, 50));
+        form.setBorder(new EmptyBorder(35, 50, 25, 50));
 
         form.add(label("E-mail"));
         form.add(Box.createVerticalStrut(5));
@@ -64,57 +68,84 @@ public class LoginPage extends JFrame {
 
         form.add(Box.createVerticalStrut(28));
 
+        // Bottone con BLU_MEDIO
         btnAccedi = new JButton("Accedi") {
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(getBackground());
-                // 20 è il raggio dell'arco di curvatura
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
                 g2.dispose();
                 super.paintComponent(g);
             }
         };
-        btnAccedi.setContentAreaFilled(false); // Evita il rettangolo standard di sfondo
+        btnAccedi.setContentAreaFilled(false);
         btnAccedi.setAlignmentX(Component.LEFT_ALIGNMENT);
         btnAccedi.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         btnAccedi.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        btnAccedi.setBackground(new Color(30, 136, 229));
-        btnAccedi.setForeground(Color.BLACK);
+        btnAccedi.setBackground(StyleWMS.BLU_MEDIO);
+        btnAccedi.setForeground(StyleWMS.BIANCO); // Sostituito BLACK con BIANCO per contrasto sul blu
         btnAccedi.setFocusPainted(false);
         btnAccedi.setBorderPainted(false);
         btnAccedi.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         form.add(btnAccedi);
+
+        form.add(Box.createVerticalStrut(15));
+
+        // Frase di reindirizzamento alla registrazione
+        JPanel pnlRegistrati = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+        pnlRegistrati.setBackground(StyleWMS.BIANCO);
+        pnlRegistrati.setAlignmentX(Component.LEFT_ALIGNMENT);
+        pnlRegistrati.setMaximumSize(new Dimension(Integer.MAX_VALUE, 20));
+
+        JLabel lblFrase = new JLabel("Non hai un account? ");
+        lblFrase.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblFrase.setForeground(StyleWMS.GRIGIO_TESTO);
+
+        JLabel lblLink = new JLabel("<html><u>Registrati</u></html>");
+        lblLink.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lblLink.setForeground(StyleWMS.BLU_MEDIO);
+        lblLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        lblLink.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                dispose();
+                new RegistrationPage().setVisible(true);
+            }
+        });
+
+        pnlRegistrati.add(lblFrase);
+        pnlRegistrati.add(lblLink);
+        form.add(pnlRegistrati);
 
         // Assemblaggio
         root.add(header, BorderLayout.NORTH);
         root.add(form,   BorderLayout.CENTER);
         setContentPane(root);
 
-        //Listener (solo estetico: mostra dialog)
+        // Listener Login
         getRootPane().setDefaultButton(btnAccedi);
         btnAccedi.addActionListener(e ->
                 JOptionPane.showMessageDialog(this, "Login premuto!")
         );
     }
 
-    // Label corsiva sopra ogni campo
     private JLabel label(String testo) {
         JLabel l = new JLabel(testo);
         l.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        l.setForeground(new Color(60, 60, 60));
+        l.setForeground(StyleWMS.ANTRACITE);
         l.setAlignmentX(Component.LEFT_ALIGNMENT);
         return l;
     }
 
-    // Stile uniforme per TextField e PasswordField
     private void stilizza(JTextField c) {
         c.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
         c.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
         c.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createLineBorder(StyleWMS.AZZURRO_LIGHT),
                 BorderFactory.createEmptyBorder(4, 8, 4, 8)));
     }
 
