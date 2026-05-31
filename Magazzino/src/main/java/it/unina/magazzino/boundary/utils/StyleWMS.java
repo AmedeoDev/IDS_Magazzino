@@ -10,4 +10,6 @@ public class StyleWMS {
     public static final Color ANTRACITE     = new Color(0x2C, 0x3E, 0x50);
     public static final Color BIANCO        = Color.WHITE;
     public static final Color GRIGIO_TESTO  = new Color(0xAA, 0xAA, 0xAA);
+
+    public static final String LOGO_PATH = "assets/logoFinale.png";
 }

@@ -13,8 +13,6 @@ import javax.imageio.ImageIO;
 
 public class DashboardOperatore extends JFrame {
 
-    static private String logoPath = "/assets/logoFinale.png";
-
     // ── Prodotto ─────────────────────────────────────────────────
     record Prodotto(String nome, String sku, int quantita) {}
 
