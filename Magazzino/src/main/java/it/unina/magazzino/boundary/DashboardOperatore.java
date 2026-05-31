@@ -356,9 +356,22 @@ public class DashboardOperatore extends JFrame {
     }
 
     // ── Azioni ────────────────────────────────────────────────────
-    private void onStorico()    { JOptionPane.showMessageDialog(this, "Apri schermata storico."); }
+    private void onStorico(){
+        this.dispose();
+        VisualizzaStorico visualizzaStorico = new VisualizzaStorico();
+        visualizzaStorico.setVisible(true);
+    }
+
+
+
     private void onOperazioni() { JOptionPane.showMessageDialog(this, "Apri schermata operazioni."); }
-    private void onReport()     { JOptionPane.showMessageDialog(this, "Apri form segnalazione."); }
+
+
+    private void onReport(){
+        this.dispose();
+        ReportBug reportBug = new ReportBug();
+        reportBug.setVisible(true);
+    }
 
     // ── RoundPanel ────────────────────────────────────────────────
     static class RoundPanel extends JPanel {

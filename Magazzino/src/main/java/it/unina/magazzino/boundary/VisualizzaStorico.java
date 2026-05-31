@@ -137,8 +137,9 @@ public class VisualizzaStorico extends JFrame {
 
         // Listener per la navigazione di ritorno alla HomePage
         btnIndietro.addActionListener(e -> {
-            dispose();
-            new HomePage().setVisible(true);
+            this.dispose();
+            DashboardOperatore dashboardOperatore = new DashboardOperatore("Mario Rossi", "resources/assets/logoFinale.png");
+            dashboardOperatore.setVisible(true);
         });
 
         body.add(btnIndietro);
