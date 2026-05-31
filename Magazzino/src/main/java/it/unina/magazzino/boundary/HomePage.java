@@ -12,7 +12,7 @@ import java.awt.geom.RoundRectangle2D;
 
 public class HomePage extends JFrame {
 
-    // Palette colori
+    // Palette colori --> deprecato, vedi file StyleWMS
     private static final Color BLU_ACCIAIO   = new Color(0x1B, 0x4F, 0x8A);
     private static final Color BLU_MEDIO     = new Color(0x2E, 0x6D, 0xB4);
     private static final Color AZZURRO_LIGHT = new Color(0xD6, 0xE4, 0xF0);
