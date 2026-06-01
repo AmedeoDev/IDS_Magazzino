@@ -2,6 +2,12 @@ package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
 
+import it.unina.magazzino.control.LoginController;
+
+import it.unina.magazzino.entity.Operatore;
+import it.unina.magazzino.entity.Responsabile;
+import it.unina.magazzino.entity.Utente;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -149,9 +155,30 @@ public class LoginPage extends JFrame {
 
         // Listener Login
         getRootPane().setDefaultButton(btnAccedi);
-        btnAccedi.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Login premuto!")
-        );
+        btnAccedi.addActionListener(e -> {
+            String email = txtEmail.getText();
+            String password = new String(txtPassword.getPassword());
+
+            LoginController loginController = new LoginController();
+            try {
+                Utente utenteLoggato = loginController.effettuaLogin(email, password);
+                this.dispose();
+                if(utenteLoggato instanceof Operatore){
+                    DashboardOperatore dashboardOperatore = new DashboardOperatore((Operatore)utenteLoggato, "");
+                    dashboardOperatore.setVisible(true);
+                } else if (utenteLoggato instanceof Responsabile){
+                    JOptionPane.showMessageDialog(null,
+                            "Benvenuto responsabile: " + utenteLoggato.getNome() + " " + utenteLoggato.getCognome(),
+                         "Accesso Riuscito",
+                            JOptionPane.INFORMATION_MESSAGE);
+                }
+            } catch (Exception ex){
+                JOptionPane.showMessageDialog(this,
+                        ex.getMessage(),
+                        "Errore di autenticazione",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
     }
 
     private JLabel label(String testo) {

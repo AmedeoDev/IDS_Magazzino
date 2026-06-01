@@ -1,6 +1,8 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.entity.Operatore;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -16,13 +18,26 @@ public class DashboardOperatore extends JFrame {
     // ── Prodotto ─────────────────────────────────────────────────
     record Prodotto(String nome, String sku, int quantita) {}
 
+    private Operatore operatoreLoggato;
+
     // ── Costruttore ───────────────────────────────────────────────
     /**
      * @param nomeUtente  Nome completo dell'operatore (es. "Mario Rossi")
      * @param logoPath    Percorso al file immagine del logo (es. "assets/logo.png").
      * Con null ottengo il badge testuale "WMS" come fallback.
      */
-    public DashboardOperatore(String nomeUtente, String logoPath) {
+    public DashboardOperatore(Operatore operatore, String logoPath) {
+
+        this.operatoreLoggato = operatore;
+        String nome = operatore.getNome();
+        String cognome = operatore.getCognome();
+        String email = operatore.getEmail();
+
+        String nomeUtente = nome + " " + cognome;
+
+        // questo è solo per testare la risposta della UI
+        String password = operatore.getPassword();
+
         setTitle("Dashboard Operatore — " + nomeUtente);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(700, 620);
