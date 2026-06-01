@@ -478,6 +478,10 @@ public class DashboardResponsabile extends JFrame {
                     @Override public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) {
                         JOptionPane.showMessageDialog(DashboardResponsabile.this, "Logout effettuato.");
+                        dispose();
+                        HomePage homePage = new HomePage();
+                        homePage.setVisible(true);
+
                     }
                 });
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
