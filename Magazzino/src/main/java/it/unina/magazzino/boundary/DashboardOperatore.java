@@ -22,7 +22,6 @@ public class DashboardOperatore extends JFrame {
 
     // ── Costruttore ───────────────────────────────────────────────
     /**
-     * @param nomeUtente  Nome completo dell'operatore (es. "Mario Rossi")
      * @param logoPath    Percorso al file immagine del logo (es. "assets/logo.png").
      * Con null ottengo il badge testuale "WMS" come fallback.
      */
