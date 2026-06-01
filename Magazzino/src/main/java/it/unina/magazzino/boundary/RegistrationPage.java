@@ -1,6 +1,7 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.RegistrationController;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,13 +11,13 @@ import java.awt.event.MouseEvent;
 
 public class RegistrationPage extends JFrame {
 
-    private JTextField     txtNome;
-    private JTextField     txtCognome;
-    private JTextField     txtEmail;
+    private JTextField txtNome;
+    private JTextField txtCognome;
+    private JTextField txtEmail;
     private JPasswordField txtPassword;
     private JPasswordField txtConfermaPassword;
     private JComboBox<String> cmbRuolo;
-    private JButton        btnRegistrati;
+    private JButton btnRegistrati;
 
     public RegistrationPage() {
 
@@ -190,9 +191,33 @@ public class RegistrationPage extends JFrame {
         root.add(scroll, BorderLayout.CENTER);
         setContentPane(root);
 
-        btnRegistrati.addActionListener(e ->
-                JOptionPane.showMessageDialog(this, "Registrazione premuta!")
-        );
+        btnRegistrati.addActionListener(e -> {
+
+            String nome = txtNome.getText();
+            String cognome = txtCognome.getText();
+            String email = txtEmail.getText();
+            String password = new String(txtPassword.getPassword());
+
+            String ruolo = (String)cmbRuolo.getSelectedItem();
+
+            RegistrationController regController = new RegistrationController();
+
+            try{
+                regController.registraNuovoUtente(nome, cognome, email, password, ruolo);
+                JOptionPane.showMessageDialog(this,
+                        "Registrazione completata con successo!\nOra puoi accedere alla piattaforma!",
+                        "Benvenuto in WMS!",
+                        JOptionPane.INFORMATION_MESSAGE);
+                this.dispose();
+                new LoginPage().setVisible(true);
+            } catch (Exception ex){
+                JOptionPane.showMessageDialog(this,
+                        ex.getMessage(),
+                        "Errore durante la registrazione",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        });
     }
 
     private JLabel label(String testo) {
