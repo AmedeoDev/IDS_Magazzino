@@ -7,6 +7,7 @@ import it.unina.magazzino.control.LoginController;
 import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Responsabile;
 import it.unina.magazzino.entity.Utente;
+import org.apache.xmlbeans.impl.common.Mutex;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -171,6 +172,8 @@ public class LoginPage extends JFrame {
                             "Benvenuto responsabile: " + utenteLoggato.getNome() + " " + utenteLoggato.getCognome(),
                          "Accesso Riuscito",
                             JOptionPane.INFORMATION_MESSAGE);
+                    DashboardResponsabile dashboardResponsabile = new DashboardResponsabile((Responsabile)utenteLoggato, "");
+                    dashboardResponsabile.setVisible(true);
                 }
             } catch (Exception ex){
                 JOptionPane.showMessageDialog(this,

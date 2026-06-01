@@ -1,6 +1,7 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.entity.Operatore;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -15,7 +16,12 @@ public class RegistraScarico extends JFrame {
     private JButton btnConferma;
     private JButton btnDashboard; // Rinominato per coerenza e per evitare conflitti
 
-    public RegistraScarico() {
+    private Operatore operatoreLoggato;
+
+    public RegistraScarico(Operatore operatore) {
+
+        this.operatoreLoggato = operatore;
+
         setTitle("WMS PRO – Movimento di Scarico");
         setSize(420, 520);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -144,7 +150,7 @@ public class RegistraScarico extends JFrame {
 
         btnDashboard.addActionListener(e -> {
             this.dispose();
-            DashboardOperatore dashboardOperatore = new DashboardOperatore("Mario Rossi", "resources/assets/logoFinale.png");
+            DashboardOperatore dashboardOperatore = new DashboardOperatore(this.operatoreLoggato, "resources/assets/logoFinale.png");
             dashboardOperatore.setVisible(true);
         });
     }

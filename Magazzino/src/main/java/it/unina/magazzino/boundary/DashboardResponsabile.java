@@ -1,6 +1,9 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.entity.Operatore;
+import it.unina.magazzino.entity.Responsabile;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -27,6 +30,8 @@ public class DashboardResponsabile extends JFrame {
     // Area contenuto centrale — scambiata a ogni click sidebar
     private JPanel contenutoWrapper;
 
+    private Responsabile responsabileLoggato;
+
     // Voci menu con riferimento ai label per aggiornare lo stile attivo
     private final String[] VOCI = {
             "Panoramica",
@@ -40,7 +45,12 @@ public class DashboardResponsabile extends JFrame {
     private JPanel sidebarPanel;
 
     // ── Costruttore ──────────────────────────────────────────────
-    public DashboardResponsabile(String nomeUtente, String logoPath) {
+    public DashboardResponsabile(Responsabile responsabile, String logoPath) {
+
+        this.responsabileLoggato = responsabile;
+
+        String nomeUtente = responsabile.getNome() + " " + responsabile.getCognome();
+
         setTitle("Dashboard Responsabile — " + nomeUtente);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setSize(1100, 700);
@@ -522,9 +532,16 @@ public class DashboardResponsabile extends JFrame {
         SwingUtilities.invokeLater(() -> {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
             catch (Exception ignored) {}
-            String nome = args.length > 0 ? args[0] : "Laura Bianchi";
+            Responsabile respTesting = new Responsabile(
+                    "Amedeo",
+                    "Catanese Napolitano",
+                    "amedeoSup@mail.it",
+                    "123456",
+                    "SUPER-001"
+            );
+
             String logo = args.length > 1 ? args[1] : null;
-            new DashboardResponsabile(nome, logo).setVisible(true);
+            new DashboardResponsabile(respTesting, logo).setVisible(true);
         });
     }
 }

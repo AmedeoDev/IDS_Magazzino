@@ -1,6 +1,7 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.entity.Operatore;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -15,7 +16,10 @@ public class VisualizzaStorico extends JFrame {
     private JTable tableMovimenti;
     private JButton btnIndietro;
 
-    public VisualizzaStorico() {
+    private Operatore operatoreLoggato;
+
+    public VisualizzaStorico(Operatore operatore) {
+        this.operatoreLoggato = operatore;
         // Configurazioni Finestra coerenti con il resto del sistema
         setTitle("WMS PRO – Storico Personale Movimenti");
         setSize(520, 600);
@@ -138,7 +142,7 @@ public class VisualizzaStorico extends JFrame {
         // Listener per la navigazione di ritorno alla HomePage
         btnIndietro.addActionListener(e -> {
             this.dispose();
-            DashboardOperatore dashboardOperatore = new DashboardOperatore("Mario Rossi", "resources/assets/logoFinale.png");
+            DashboardOperatore dashboardOperatore = new DashboardOperatore(this.operatoreLoggato, "resources/assets/logoFinale.png");
             dashboardOperatore.setVisible(true);
         });
 
@@ -155,6 +159,19 @@ public class VisualizzaStorico extends JFrame {
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
         catch (Exception ignored) {}
 
-        SwingUtilities.invokeLater(() -> new VisualizzaStorico().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+
+            Operatore operatoreTest = new Operatore(
+                    "Francesco",
+                    "Capasso",
+                    "cap@mail.it",
+                    "pswtest",
+                    "TEST-003"
+            );
+
+            new VisualizzaStorico(operatoreTest).setVisible(true);
+
+
+        });
     }
 }

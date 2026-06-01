@@ -1,6 +1,7 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.entity.Operatore;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -14,7 +15,11 @@ public class EffettuaOperazioni extends JFrame {
     private JButton btnScarico;
     private JButton btnDashboard;
 
-    public EffettuaOperazioni() {
+    Operatore operatoreCorrente;
+
+    public EffettuaOperazioni(Operatore operatore) {
+
+        this.operatoreCorrente = operatore;
         setTitle("WMS PRO – Gestione Movimenti");
         setSize(440, 480);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -152,24 +157,37 @@ public class EffettuaOperazioni extends JFrame {
         // Apre la schermata di Carico
         btnCarico.addActionListener(e -> {
             this.dispose();
-            new RegistraCarico().setVisible(true);
+            new RegistraCarico(this.operatoreCorrente).setVisible(true);
         });
 
         // Apre la schermata di Scarico
         btnScarico.addActionListener(e -> {
             this.dispose();
-            new RegistraScarico().setVisible(true);
+            new RegistraScarico(this.operatoreCorrente).setVisible(true);
         });
 
         // Ritorna alla Dashboard dell'operatore
         btnDashboard.addActionListener(e -> {
             this.dispose();
-            DashboardOperatore dashboardOperatore = new DashboardOperatore("Mario Rossi", "resources/assets/logoFinale.png");
+            DashboardOperatore dashboardOperatore = new DashboardOperatore(this.operatoreCorrente, "resources/assets/logoFinale.png");
             dashboardOperatore.setVisible(true);
         });
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new EffettuaOperazioni().setVisible(true));
+        SwingUtilities.invokeLater(() -> {
+
+            Operatore opTest = new Operatore(
+                    "Amedeo",
+                    "catanese",
+                    "am@mail.it",
+                    "testpw",
+                    "TEST-002"
+
+            );
+
+            new EffettuaOperazioni(opTest).setVisible(true);
+
+        });
     }
 }

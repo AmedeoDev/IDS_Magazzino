@@ -29,11 +29,8 @@ public class DashboardOperatore extends JFrame {
     public DashboardOperatore(Operatore operatore, String logoPath) {
 
         this.operatoreLoggato = operatore;
-        String nome = operatore.getNome();
-        String cognome = operatore.getCognome();
         String email = operatore.getEmail();
-
-        String nomeUtente = nome + " " + cognome;
+        String nomeUtente = operatore.getNome() + " " + operatore.getCognome();
 
         // questo è solo per testare la risposta della UI
         String password = operatore.getPassword();
@@ -371,14 +368,14 @@ public class DashboardOperatore extends JFrame {
     // ── Azioni ────────────────────────────────────────────────────
     private void onStorico(){
         this.dispose();
-        VisualizzaStorico visualizzaStorico = new VisualizzaStorico();
+        VisualizzaStorico visualizzaStorico = new VisualizzaStorico(this.operatoreLoggato);
         visualizzaStorico.setVisible(true);
     }
 
     // Collegamento effettuato alla classe EffettuaOperazioni
     private void onOperazioni() {
         this.dispose();
-        EffettuaOperazioni effettuaOperazioni = new EffettuaOperazioni();
+        EffettuaOperazioni effettuaOperazioni = new EffettuaOperazioni(this.operatoreLoggato);
         effettuaOperazioni.setVisible(true);
     }
 
@@ -416,10 +413,17 @@ public class DashboardOperatore extends JFrame {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
             catch (Exception ignored) {}
 
-            String nomeUtente = args.length > 0 ? args[0] : "Mario Rossi";
-            String logoPath   = args.length > 1 ? args[1] : null;
+            Operatore operatoreTest = new Operatore(
+                    "Duce",
+                    "Mussolini",
+                    "duce@mail.it",
+                    "888888",
+                    "DUCE_1"
+            );
 
-            new DashboardOperatore(nomeUtente, logoPath).setVisible(true);
+            String logoPath = args.length > 1 ? args[1] : null;
+
+            new DashboardOperatore(operatoreTest, logoPath).setVisible(true);
         });
     }
 }
