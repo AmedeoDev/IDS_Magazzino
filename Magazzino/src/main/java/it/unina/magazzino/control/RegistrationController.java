@@ -11,19 +11,24 @@ public class RegistrationController {
     * @throws Exception se la validazione fallisce o l'utente risulta già registrato
     */
 
-    public boolean registraNuovoUtente(String nome, String cognome, String email, String password, String ruolo) throws Exception {
+    public boolean registraNuovoUtente(String nome, String cognome, String email, String password, String confermaPsw,String ruolo) throws Exception {
 
         if(nome == null || nome.trim().isEmpty()
             || cognome == null || cognome.trim().isEmpty()
             || email == null || email.trim().isEmpty()
             || password == null || password.trim().isEmpty()
-            || ruolo == null || ruolo.trim().isEmpty()) {
+            || ruolo == null || ruolo.trim().isEmpty()
+            || confermaPsw == null || confermaPsw.trim().isEmpty()) {
 
             throw new Exception("Compila correttamente i campi per la registrazione");
         }
 
         if (password.length() < 6){
             throw new Exception("Passord troppo debole, almeno 6 caratteri");
+        }
+
+        if(!password.equals(confermaPsw)){
+            throw new Exception("Le due password non coincidono!");
         }
 
         if(email.equalsIgnoreCase("operatore@mail.it") || email.equalsIgnoreCase("admin@mail.it")){

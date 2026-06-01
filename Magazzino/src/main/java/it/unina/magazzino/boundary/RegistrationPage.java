@@ -197,13 +197,14 @@ public class RegistrationPage extends JFrame {
             String cognome = txtCognome.getText();
             String email = txtEmail.getText();
             String password = new String(txtPassword.getPassword());
+            String confermaPassword = new String(txtConfermaPassword.getPassword());
 
             String ruolo = (String)cmbRuolo.getSelectedItem();
 
             RegistrationController regController = new RegistrationController();
 
             try{
-                regController.registraNuovoUtente(nome, cognome, email, password, ruolo);
+                regController.registraNuovoUtente(nome, cognome, email, password, confermaPassword, ruolo);
                 JOptionPane.showMessageDialog(this,
                         "Registrazione completata con successo!\nOra puoi accedere alla piattaforma!",
                         "Benvenuto in WMS!",
