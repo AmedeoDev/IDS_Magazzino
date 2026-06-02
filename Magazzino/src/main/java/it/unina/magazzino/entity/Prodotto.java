@@ -30,6 +30,13 @@ public class Prodotto {
         this.sogliaMinima = sogliaMinima;
     }
 
+    public String getID(){ return this.id; }
+
+    public String getCategoria() { return this.categoria; }
+    public String getNome() { return this.nome; }
+    public String getDescrizione() { return this.descrizione; }
+    public int getQtaDisponibile() { return this.qtaDisponibile; }
+
     public Integer getSogliaMinima(){
         return this.sogliaMinima;
     }
@@ -46,5 +53,45 @@ public class Prodotto {
             return false;
         }
         return this.qtaDisponibile <= this.sogliaMinima;
+    }
+
+    public void carica(int qta){
+        if(qta < 0){
+            throw new IllegalArgumentException("La quantità deve essere maggiore di zero!");
+        }
+
+        this.qtaDisponibile += qta;
+    }
+
+    public void scarica(int qta){
+        if(qta <= 0){
+            throw new IllegalArgumentException("La quantità deve essere maggiore di zero!");
+        }
+
+        this.qtaDisponibile -= qta;
+    }
+
+    public void setCategoria(String categoria){
+        this.categoria = categoria;
+    }
+
+    public void setNome(String nome){
+        this.nome = nome;
+    }
+
+    public void setDescrizione(String descrizione){
+        this.descrizione = descrizione;
+    }
+
+
+    public boolean isEmpty(){
+        return this.qtaDisponibile == 0;
+    }
+
+    // override
+    @Override
+    public String toString(){
+        String alertScorta = isSottoScorta() ? "[!!!!] SOTTO SCORTA" : "";
+        return "[" + id + "]" + nome + " - " + categoria + " • Qta. disp: " + qtaDisponibile + alertScorta;
     }
 }

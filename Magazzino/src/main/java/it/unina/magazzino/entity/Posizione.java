@@ -48,4 +48,28 @@ public class Posizione {
     public boolean isLibero(){
         return this.prodotto == null;
     }
+
+    public void depositaProdotto(Prodotto prodotto){
+        if (prodotto == null){
+            throw new IllegalArgumentException("Impossibile depositare un prodotto nullo");
+        }
+        if(!isLibero()){
+            throw new IllegalArgumentException("La posizione " + codicePosizione + " è occupata!");
+        }
+        this.prodotto = prodotto;
+    }
+
+    public Prodotto liberaPosizione(){
+        if(isLibero()){
+            throw new IllegalStateException("La posizione " + codicePosizione + " è disponibile!");
+        }
+        Prodotto prodottoRimosso = this.prodotto;
+        return prodottoRimosso;
+    }
+
+    @Override
+    public String toString(){
+        String stato = isLibero() ? "[LIBERA]" : "[OCCUPATA da " + prodotto.getID() + "]";
+        return "Posizione: " + codicePosizione + "{AREA= " + area + ", SCAFFALE= " + scaffale + "}";
+    }
 }
