@@ -90,7 +90,7 @@ public class RegistrationController {
         if(ruolo.equalsIgnoreCase("OPERATORE")){
             newUser = new Operatore(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
         } else if(ruolo.equalsIgnoreCase("RESPONSABILE")){
-            newUser = new Operatore(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
+            newUser = new Responsabile(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
         }
 
         // N.B. ora interagiamo col database, eventuali errori ad esso legati vanno visti qui...
