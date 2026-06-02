@@ -8,7 +8,7 @@ public class DBConnectionManager {
 
     private static Connection connection;
 
-    private static final String URL = "jdbc:mysql://localhost:3306/db_uni";
+    private static final String URL = "jdbc:mysql://localhost:3306/magazzino";
     private static final String USER = "root";
     private static final String PSW = "adminSQLP_assword#12";
 

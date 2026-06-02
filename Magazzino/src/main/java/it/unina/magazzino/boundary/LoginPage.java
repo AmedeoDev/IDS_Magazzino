@@ -156,7 +156,7 @@ public class LoginPage extends JFrame {
         // Listener Login
         getRootPane().setDefaultButton(btnAccedi);
         btnAccedi.addActionListener(e -> {
-            String email = txtEmail.getText();
+            String email = txtEmail.getText().trim();
             String password = new String(txtPassword.getPassword());
 
             LoginController loginController = new LoginController();

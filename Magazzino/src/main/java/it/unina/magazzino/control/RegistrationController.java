@@ -65,7 +65,7 @@ public class RegistrationController {
 
         // 8. Creazione utente
         Utente nuovoUtente;
-        String idAssociato = "USR-" + System.currentTimeMillis() % 1000;
+        String idAssociato = "ST-" + System.currentTimeMillis() % 1000;
 
         if (ruolo.equalsIgnoreCase("OPERATORE")) {
             nuovoUtente = new Operatore(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);

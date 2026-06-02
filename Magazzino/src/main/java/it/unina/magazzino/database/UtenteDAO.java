@@ -42,6 +42,11 @@ public class UtenteDAO {
             stmt.setString(1, email);
             stmt.setString(2, password);
 
+            // DEBUG: VEDO QUALI DATI SONO PASSATI
+
+            System.out.println("[DEBUG] - Email: " + email);
+            System.out.println("[DEBUG] - Password: " + password);
+
             ResultSet result = stmt.executeQuery();
 
             if (result.next()) {
