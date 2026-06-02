@@ -1,9 +1,12 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
-import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Responsabile;
+import org.kordamp.ikonli.material2.Material2OutlinedAL;
+import org.kordamp.ikonli.material2.Material2OutlinedMZ;
+import org.kordamp.ikonli.swing.FontIcon;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -11,28 +14,13 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
 
-/**
- * DashboardResponsabile — versione aggiornata con navigazione funzionante.
- *
- * Sezioni disponibili:
- *  - Panoramica       → contenuto riepilogativo (RF10/RF11/RF13)
- *  - Gestisci Prodotti → GestisciProdotti (RF04–RF07)
- *  - Storico Movimenti → StoricoMovimenti (RF11/RF12)
- *  - Prodotti Sotto Scorta → ProdottiSottoScorta (RF10/RF08)
- *  - Andamento Magazzino → AndamentoMagazzino (RF13/RF14)
- */
 public class DashboardResponsabile extends JFrame {
 
     private String sezioneAttiva = "Panoramica";
-
-    // Area contenuto centrale — scambiata a ogni click sidebar
     private JPanel contenutoWrapper;
-
     private Responsabile responsabileLoggato;
 
-    // Voci menu con riferimento ai label per aggiornare lo stile attivo
     private final String[] VOCI = {
             "Panoramica",
             "Gestisci Prodotti",
@@ -40,7 +28,6 @@ public class DashboardResponsabile extends JFrame {
             "Prodotti Sotto Scorta",
             "Andamento Magazzino"
     };
-    private final String[] ICONE = {"🏠","📦","📋","⚠️","📊"};
 
     private JPanel sidebarPanel;
 
@@ -48,7 +35,6 @@ public class DashboardResponsabile extends JFrame {
     public DashboardResponsabile(Responsabile responsabile, String logoPath) {
 
         this.responsabileLoggato = responsabile;
-
         String nomeUtente = responsabile.getNome() + " " + responsabile.getCognome();
 
         setTitle("Dashboard Responsabile — " + nomeUtente);
@@ -80,7 +66,8 @@ public class DashboardResponsabile extends JFrame {
     // ══════════════════════════════════════════════════════════════
     private JPanel buildTopbar(String nomeUtente, String logoPath) {
         JPanel bar = new JPanel(new BorderLayout()) {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 g.setColor(StyleWMS.BLU_ACCIAIO);
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
@@ -91,6 +78,7 @@ public class DashboardResponsabile extends JFrame {
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         left.setOpaque(false);
         JPanel avatar = buildAvatar(nomeUtente);
+
         JPanel testi = new JPanel();
         testi.setOpaque(false);
         testi.setLayout(new BoxLayout(testi, BoxLayout.Y_AXIS));
@@ -118,13 +106,14 @@ public class DashboardResponsabile extends JFrame {
                 if (imgURL != null) {
                     BufferedImage img = ImageIO.read(imgURL);
                     int h = 44;
-                    int w = (int)((double) img.getWidth() / img.getHeight() * h);
+                    int w = (int) ((double) img.getWidth() / img.getHeight() * h);
                     Image scaled = img.getScaledInstance(w, h, Image.SCALE_SMOOTH);
                     JLabel lbl = new JLabel(new ImageIcon(scaled));
                     lbl.setBorder(new EmptyBorder(0, 0, 0, 4));
                     return lbl;
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
         return buildTextBadge();
     }
@@ -142,14 +131,19 @@ public class DashboardResponsabile extends JFrame {
     private JPanel buildAvatar(String nomeUtente) {
         String iniziali = buildInitials(nomeUtente);
         JPanel avatar = new JPanel() {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(StyleWMS.AZZURRO_LIGHT);
                 g2.fillOval(0, 0, getWidth(), getHeight());
                 g2.dispose();
             }
-            @Override public Dimension getPreferredSize() { return new Dimension(36, 36); }
+
+            @Override
+            public Dimension getPreferredSize() {
+                return new Dimension(36, 36);
+            }
         };
         avatar.setOpaque(false);
         avatar.setLayout(new GridBagLayout());
@@ -161,11 +155,12 @@ public class DashboardResponsabile extends JFrame {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // SIDEBAR — navigazione cablata
+    // SIDEBAR
     // ══════════════════════════════════════════════════════════════
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel() {
-            @Override protected void paintComponent(Graphics g) {
+            @Override
+            protected void paintComponent(Graphics g) {
                 g.setColor(new Color(20, 90, 170));
                 g.fillRect(0, 0, getWidth(), getHeight());
             }
@@ -182,8 +177,8 @@ public class DashboardResponsabile extends JFrame {
         sezioneLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(sezioneLbl);
 
-        for (int i = 0; i < VOCI.length; i++) {
-            sidebar.add(voceMenu(sidebar, ICONE[i], VOCI[i]));
+        for (String voce : VOCI) {
+            sidebar.add(voceMenu(sidebar, voce));
         }
 
         sidebar.add(Box.createVerticalGlue());
@@ -201,12 +196,18 @@ public class DashboardResponsabile extends JFrame {
         return sidebar;
     }
 
-    /**
-     * Voce menu con highlight attivo e navigazione funzionante.
-     * Ogni click aggiorna sezioneAttiva, ridisegna la sidebar
-     * e sostituisce il pannello centrale.
-     */
-    private JPanel voceMenu(JPanel sidebar, String icona, String testo) {
+    private JPanel voceMenu(JPanel sidebar, String testo) {
+
+        // Icona Ikonli associata alla voce
+        FontIcon fontIcon = switch (testo) {
+            case "Panoramica"            -> FontIcon.of(Material2OutlinedAL.DASHBOARD,        18, StyleWMS.BIANCO_TALCO);
+            case "Gestisci Prodotti"     -> FontIcon.of(Material2OutlinedAL.CATEGORY,          18, StyleWMS.BIANCO_TALCO);
+            case "Storico Movimenti"     -> FontIcon.of(Material2OutlinedAL.HISTORY,           18, StyleWMS.BIANCO_TALCO);
+            case "Prodotti Sotto Scorta" -> FontIcon.of(Material2OutlinedAL.ERROR_OUTLINE,     18, StyleWMS.BIANCO_TALCO);
+            case "Andamento Magazzino"   -> FontIcon.of(Material2OutlinedMZ.SHOW_CHART,        18, StyleWMS.BIANCO_TALCO);
+            default                      -> FontIcon.of(Material2OutlinedAL.FIBER_MANUAL_RECORD, 18, StyleWMS.BIANCO_TALCO);
+        };
+
         JPanel row = new JPanel() {
             private boolean hovered = false;
             {
@@ -217,13 +218,15 @@ public class DashboardResponsabile extends JFrame {
                         if (!testo.equals(sezioneAttiva)) {
                             sezioneAttiva = testo;
                             navigaA(testo);
-                            sidebar.repaint(); // aggiorna highlight
+                            sidebar.repaint();
                         }
                     }
                 });
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
-            @Override protected void paintComponent(Graphics g) {
+
+            @Override
+            protected void paintComponent(Graphics g) {
                 boolean attivo = testo.equals(sezioneAttiva);
                 if (attivo) {
                     Graphics2D g2 = (Graphics2D) g.create();
@@ -249,18 +252,28 @@ public class DashboardResponsabile extends JFrame {
         row.setBorder(new EmptyBorder(4, 16, 4, 16));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JLabel ico = new JLabel(icona);
-        ico.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        // Wrapper icona: aggiorna il colore dinamicamente in base allo stato attivo
+        JLabel ico = new JLabel(fontIcon) {
+            @Override
+            public void paint(Graphics g) {
+                fontIcon.setIconColor(
+                        testo.equals(sezioneAttiva) ? StyleWMS.BIANCO : StyleWMS.BIANCO_TALCO
+                );
+                super.paint(g);
+            }
+        };
         ico.setBorder(new EmptyBorder(0, 0, 0, 10));
 
-        // Il testo viene reso bold se la voce è quella attiva al momento del repaint
         JLabel lbl = new JLabel(testo) {
-            @Override public Font getFont() {
+            @Override
+            public Font getFont() {
                 return new Font("SansSerif",
                         testo.equals(sezioneAttiva) ? Font.BOLD : Font.PLAIN, 13);
             }
-            @Override public Color getForeground() {
-                return testo.equals(sezioneAttiva) ? StyleWMS.BIANCO : new Color(0xD6, 0xE4, 0xF0);
+
+            @Override
+            public Color getForeground() {
+                return testo.equals(sezioneAttiva) ? StyleWMS.BIANCO : StyleWMS.BIANCO_TALCO;
             }
         };
 
@@ -286,7 +299,7 @@ public class DashboardResponsabile extends JFrame {
     }
 
     // ══════════════════════════════════════════════════════════════
-    // PANORAMICA (home) — invariata rispetto all'originale
+    // PANORAMICA
     // ══════════════════════════════════════════════════════════════
     private JScrollPane buildPanoramica() {
         JPanel content = new JPanel();
@@ -328,10 +341,10 @@ public class DashboardResponsabile extends JFrame {
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.add(kpiCard("Prodotti Totali",   "142", StyleWMS.BLU_ACCIAIO));
-        row.add(kpiCard("Movimenti Oggi",     "27",  new Color(46, 125, 50)));
-        row.add(kpiCard("Sotto Scorta",        "5",  new Color(198, 40, 40)));
-        row.add(kpiCard("Operatori Attivi",    "8",  new Color(123, 31, 162)));
+        row.add(kpiCard("Prodotti Totali",  "142", StyleWMS.BLU_ACCIAIO));
+        row.add(kpiCard("Movimenti Oggi",    "27",  new Color(46, 125, 50)));
+        row.add(kpiCard("Sotto Scorta",       "5",  new Color(198, 40, 40)));
+        row.add(kpiCard("Operatori Attivi",   "8",  new Color(123, 31, 162)));
         return row;
     }
 
@@ -358,13 +371,13 @@ public class DashboardResponsabile extends JFrame {
         panel.setLayout(new BorderLayout(0, 10));
         panel.setBorder(new EmptyBorder(16, 16, 16, 16));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        String[] col = {"ID Prodotto","Tipo","Quantità","Data","Operatore"};
+        String[] col = {"ID Prodotto", "Tipo", "Quantità", "Data", "Operatore"};
         Object[][] dati = {
-                {"123456","Carico",  "+50","01/06/2026","m.verdi@wms.it"},
-                {"789012","Scarico", "-20","01/06/2026","a.bianchi@wms.it"},
-                {"345678","Carico",  "+30","31/05/2026","m.verdi@wms.it"},
-                {"901234","Scarico", "-5", "31/05/2026","l.neri@wms.it"},
-                {"567890","Carico",  "+100","30/05/2026","a.bianchi@wms.it"},
+                {"123456", "Carico",  "+50",  "01/06/2026", "m.verdi@wms.it"},
+                {"789012", "Scarico", "-20",  "01/06/2026", "a.bianchi@wms.it"},
+                {"345678", "Carico",  "+30",  "31/05/2026", "m.verdi@wms.it"},
+                {"901234", "Scarico", "-5",   "31/05/2026", "l.neri@wms.it"},
+                {"567890", "Carico",  "+100", "30/05/2026", "a.bianchi@wms.it"},
         };
         panel.add(buildTable(col, dati), BorderLayout.CENTER);
         return panel;
@@ -376,13 +389,13 @@ public class DashboardResponsabile extends JFrame {
         panel.setLayout(new BorderLayout(0, 10));
         panel.setBorder(new EmptyBorder(16, 16, 16, 16));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        String[] col = {"ID","Nome Prodotto","Disponibile","Soglia Minima"};
+        String[] col = {"ID", "Nome Prodotto", "Disponibile", "Soglia Minima"};
         Object[][] dati = {
-                {"000011","Guanti latex",     "3", "10"},
-                {"000045","Nastro da imballo","1", "5"},
-                {"000078","Scatole S",         "4", "20"},
-                {"000102","Etichette",         "8", "15"},
-                {"000134","Pallets",           "2", "6"},
+                {"000011", "Guanti latex",      "3", "10"},
+                {"000045", "Nastro da imballo", "1", "5"},
+                {"000078", "Scatole S",          "4", "20"},
+                {"000102", "Etichette",          "8", "15"},
+                {"000134", "Pallets",            "2", "6"},
         };
         panel.add(buildTable(col, dati), BorderLayout.CENTER);
         return panel;
@@ -397,7 +410,7 @@ public class DashboardResponsabile extends JFrame {
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
         panel.add(statBox("Operazioni totali (7gg)",  "89",                    StyleWMS.BLU_ACCIAIO));
         panel.add(statBox("Prodotti più movimentati", "Guanti latex, Scatole", StyleWMS.BLU_MEDIO));
-        panel.add(statBox("Sotto scorta attualmente", "5",                     new Color(198,40,40)));
+        panel.add(statBox("Sotto scorta attualmente", "5",                     new Color(198, 40, 40)));
         return panel;
     }
 
@@ -434,7 +447,8 @@ public class DashboardResponsabile extends JFrame {
         link.setForeground(StyleWMS.BLU_MEDIO);
         link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         link.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
+            @Override
+            public void mouseClicked(MouseEvent e) {
                 dispose();
                 new ReportBug().setVisible(true);
             }
@@ -491,16 +505,17 @@ public class DashboardResponsabile extends JFrame {
                         dispose();
                         HomePage homePage = new HomePage();
                         homePage.setVisible(true);
-
                     }
                 });
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
-            @Override protected void paintComponent(Graphics g) {
+
+            @Override
+            protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(hovered ? new Color(180,30,30) : new Color(198,40,40));
-                g2.fill(new RoundRectangle2D.Float(8, 0, getWidth()-16, getHeight(), 12, 12));
+                g2.setColor(hovered ? new Color(180, 30, 30) : new Color(198, 40, 40));
+                g2.fill(new RoundRectangle2D.Float(8, 0, getWidth() - 16, getHeight(), 12, 12));
                 g2.dispose();
             }
         };
@@ -508,10 +523,12 @@ public class DashboardResponsabile extends JFrame {
         card.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         card.setBorder(new EmptyBorder(4, 20, 4, 16));
-        JLabel ico = new JLabel("⏻");
-        ico.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        ico.setForeground(StyleWMS.BIANCO);
-        ico.setBorder(new EmptyBorder(0,0,0,10));
+
+        // Icona logout con Ikonli
+        FontIcon logoutIcon = FontIcon.of(Material2OutlinedMZ.POWER_SETTINGS_NEW, 16, StyleWMS.BIANCO);
+        JLabel ico = new JLabel(logoutIcon);
+        ico.setBorder(new EmptyBorder(0, 0, 0, 10));
+
         JLabel lbl = new JLabel("Esci");
         lbl.setFont(new Font("SansSerif", Font.BOLD, 13));
         lbl.setForeground(StyleWMS.BIANCO);
@@ -523,8 +540,9 @@ public class DashboardResponsabile extends JFrame {
     // ── Helpers ──────────────────────────────────────────────────
     private String buildInitials(String nome) {
         String[] parti = nome.trim().split("\\s+");
-        if (parti.length == 1) return parti[0].substring(0, Math.min(2, parti[0].length())).toUpperCase();
-        return ("" + parti[0].charAt(0) + parti[parti.length-1].charAt(0)).toUpperCase();
+        if (parti.length == 1)
+            return parti[0].substring(0, Math.min(2, parti[0].length())).toUpperCase();
+        return ("" + parti[0].charAt(0) + parti[parti.length - 1].charAt(0)).toUpperCase();
     }
 
     // ── main ─────────────────────────────────────────────────────
@@ -539,7 +557,6 @@ public class DashboardResponsabile extends JFrame {
                     "123456",
                     "SUPER-001"
             );
-
             String logo = args.length > 1 ? args[1] : null;
             new DashboardResponsabile(respTesting, logo).setVisible(true);
         });

@@ -129,7 +129,7 @@ public class HomePage extends JFrame {
         add(wrapper, gbc);
     }
 
-    // ── Separatore "oppure" ──
+    // ── Separatore "oppure"
     private JPanel buildSeparator() {
         JPanel p = new JPanel(new GridBagLayout()) {
             @Override public Dimension getPreferredSize() {

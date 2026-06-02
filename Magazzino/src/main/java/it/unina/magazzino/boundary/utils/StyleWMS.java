@@ -9,6 +9,7 @@ public class StyleWMS {
     public static final Color GRIGIO_NEUTRO = new Color(0xF4, 0xF6, 0xF8);
     public static final Color ANTRACITE     = new Color(0x2C, 0x3E, 0x50);
     public static final Color BIANCO        = Color.WHITE;
+    public static final Color BIANCO_TALCO  = new Color(0xF5, 0xF5, 0xF0); // ← nuovo
     public static final Color GRIGIO_TESTO  = new Color(0xAA, 0xAA, 0xAA);
 
     public static final String LOGO_PATH = "assets/logoFinale.png";

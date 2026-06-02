@@ -15,10 +15,6 @@
       <root url="jar://$MAVEN_REPOSITORY$/com/github/virtuald/curvesapi/1.08/curvesapi-1.08.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/logging/log4j/log4j-api/2.21.1/log4j-api-2.21.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-collections4/4.4/commons-collections4-4.4.jar!/" />
-      <!-- Ikonli: icone vettoriali per Swing, da inserire nella dashboard responsabile -->
-      <root url="jar://$MAVEN_REPOSITORY$/org/kordamp/ikonli/ikonli-swing/12.3.1/ikonli-swing-12.3.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/kordamp/ikonli/ikonli-core/12.3.1/ikonli-core-12.3.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/kordamp/ikonli/ikonli-material2-pack/12.3.1/ikonli-material2-pack-12.3.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

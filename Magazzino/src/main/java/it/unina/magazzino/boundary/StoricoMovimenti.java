@@ -231,7 +231,7 @@ public class StoricoMovimenti extends JPanel {
         lbl.setText("Visualizzati " + vis + " di " + tot + " movimenti");
     }
 
-    // ── Barra esporta ────────────────────────────────────────────
+    // ── Barra esporta
     private JPanel buildExportBar() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         bar.setOpaque(false);
@@ -243,7 +243,7 @@ public class StoricoMovimenti extends JPanel {
         return bar;
     }
 
-    // ── Logica filtri ────────────────────────────────────────────
+    // ── Logica filtri
     private void applicaFiltri() {
         String testo = campoRicerca.getText().trim();
         String tipo  = (String) filtroTipo.getSelectedItem();
