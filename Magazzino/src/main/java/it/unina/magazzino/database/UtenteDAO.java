@@ -11,7 +11,6 @@ import java.sql.SQLException;
 
 public class UtenteDAO {
 
-    // AGGIUNTO: "throws SQLException" per delegare l'errore al Controller
     public Utente effettuaLogin(String email, String password) throws SQLException {
 
         String query = "SELECT * FROM utente WHERE email = ? AND password = ?";
@@ -30,7 +29,6 @@ public class UtenteDAO {
                 String nome = result.getString("Nome");
                 String cognome = result.getString("Cognome");
 
-                // CAMBIATO: Nomi variabili modificati per evitare conflitti coi parametri del metodo
                 String mailDB = result.getString("Email");
                 String passDB = result.getString("Password");
 
