@@ -12,6 +12,11 @@ public class RegistrationController {
     /*
      * Gestiamo la logica per garantire una corretta registrazione degli utenti
      * @throws Exception se la validazione fallisce o l'utente risulta già registrato
+     * Ultime aggiunte:
+     *  Ruolo placeholder — blocca se l'utente lascia "-- Seleziona --"
+        Regex nome/cognome — accetta lettere italiane/accentate, spazi, apostrofi e trattini (es. D'Angelo, De Luca)
+        Regex email — formato standard user@domain.ext
+        Password più robusta — almeno una lettera e un numero, non solo lunghezza minima
      */
 
 

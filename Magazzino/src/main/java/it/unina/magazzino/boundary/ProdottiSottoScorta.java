@@ -17,6 +17,12 @@ import java.awt.geom.RoundRectangle2D;
  *  - Indicatore visivo della criticità (livello basso / critico)
  *  - Azione "Riordina" per avviare un ordine di rifornimento (RF08)
  *  - Riepilogo KPI: totale sotto scorta, media scarto, prodotto più critico
+ *
+ * Notifiche:
+ *  - Quando si riordina un singolo prodotto, risale alla DashboardResponsabile
+ *    tramite SwingUtilities.getWindowAncestor() e chiama decrementaNotifica()
+ *  - Quando si riordinano tutti i prodotti, chiama azzeraNotifiche()
+ *  - Il costruttore rimane invariato (nessun parametro aggiuntivo)
  */
 public class ProdottiSottoScorta extends JPanel {
 
@@ -36,6 +42,7 @@ public class ProdottiSottoScorta extends JPanel {
             {"000134","Pallets 80x120",       "Logistica",   "2",  "6",  "-4",  "Critico",  "Riordina"},
     };
 
+    // ── Costruttore invariato: nessun parametro aggiuntivo ────────
     public ProdottiSottoScorta() {
         setOpaque(false);
         setLayout(new BorderLayout(0, 14));
@@ -46,13 +53,25 @@ public class ProdottiSottoScorta extends JPanel {
         add(buildBottomActions(), BorderLayout.SOUTH);
     }
 
-    // ── Header: sezione label + KPI strip ────────────────────────
+    // ── Metodo helper: recupera la DashboardResponsabile dalla gerarchia Swing ──
+    // SwingUtilities.getWindowAncestor() risale la catena padre→finestra
+    // senza che ProdottiSottoScorta debba tenere un riferimento esplicito.
+    // Restituisce null se il pannello non è ancora agganciato a una finestra
+    // o se la finestra padre non è una DashboardResponsabile.
+    private DashboardResponsabile getDashboard() {
+        Window w = SwingUtilities.getWindowAncestor(this);
+        if (w instanceof DashboardResponsabile) {
+            return (DashboardResponsabile) w;
+        }
+        return null;
+    }
+
+    // ── Header: sezione label + KPI strip
     private JPanel buildHeader() {
         JPanel wrap = new JPanel();
         wrap.setOpaque(false);
         wrap.setLayout(new BoxLayout(wrap, BoxLayout.Y_AXIS));
 
-        // Etichetta
         JLabel sezione = new JLabel("PRODOTTI SOTTO SCORTA  ·  RF10");
         sezione.setFont(new Font("SansSerif", Font.BOLD, 10));
         sezione.setForeground(new Color(0x88, 0x88, 0x88));
@@ -60,7 +79,7 @@ public class ProdottiSottoScorta extends JPanel {
         wrap.add(sezione);
         wrap.add(Box.createVerticalStrut(10));
 
-        // KPI strip (3 card)
+        // KPI
         JPanel kpiRow = new JPanel(new GridLayout(1, 3, 12, 0));
         kpiRow.setOpaque(false);
         kpiRow.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -116,7 +135,7 @@ public class ProdottiSottoScorta extends JPanel {
         return card;
     }
 
-    // ── Tabella prodotti sotto scorta ────────────────────────────
+    // ── Tabella prodotti sotto scorta
     private JPanel buildTablePanel() {
         DashboardOperatore.RoundPanel panel =
                 new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, new Color(198, 40, 40, 40), 10);
@@ -187,7 +206,7 @@ public class ProdottiSottoScorta extends JPanel {
                     }
                 });
 
-        // Click su colonna "Azione"
+        // ── Click su colonna "Azione": riordina il singolo prodotto
         tabella.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -207,6 +226,18 @@ public class ProdottiSottoScorta extends JPanel {
                         JOptionPane.showMessageDialog(ProdottiSottoScorta.this,
                                 "Ordine di riordino registrato per «" + nomeProd + "» (" + riordino + " unità).",
                                 "Riordino Inviato", JOptionPane.INFORMATION_MESSAGE);
+
+                        // ── Rimozione della riga dalla tabella: il problema è risolto ──
+                        // Convertiamo l'indice dalla view al model (sicuro anche con sorting)
+                        int modelRow = tabella.convertRowIndexToModel(row);
+                        tableModel.removeRow(modelRow);
+
+                        // ── Aggiorna il badge nella sidebar: decrementa di 1 ──
+                        // getDashboard() risale la gerarchia Swing senza referenze esplicite
+                        DashboardResponsabile dash = getDashboard();
+                        if (dash != null) {
+                            dash.decrementaNotifica();
+                        }
                     }
                 }
             }
@@ -245,16 +276,37 @@ public class ProdottiSottoScorta extends JPanel {
         return l;
     }
 
-    // ── Bottoni fondo ────────────────────────────────────────────
+    // ── Bottoni fondo
     private JPanel buildBottomActions() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         bar.setOpaque(false);
 
         JButton btnTutti = GestisciProdotti.buildPrimaryButton("⟳  Riordina Tutti", new Color(198,40,40));
-        btnTutti.addActionListener(e ->
+        btnTutti.addActionListener(e -> {
+            int totale = tableModel.getRowCount();
+            if (totale == 0) {
                 JOptionPane.showMessageDialog(this,
-                        "Ordini di riordino inviati per tutti i " + tableModel.getRowCount() + " prodotti critici.",
-                        "Riordino Massivo", JOptionPane.INFORMATION_MESSAGE));
+                        "Non ci sono prodotti sotto scorta da riordinare.",
+                        "Nessun prodotto", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            JOptionPane.showMessageDialog(this,
+                    "Ordini di riordino inviati per tutti i " + totale + " prodotti critici.",
+                    "Riordino Massivo", JOptionPane.INFORMATION_MESSAGE);
+
+            // ── Rimozione di tutte le righe: scorrendo dal fondo evita
+            // problemi di indice durante la rimozione sequenziale
+            for (int i = totale - 1; i >= 0; i--) {
+                tableModel.removeRow(i);
+            }
+
+            // ── Azzera il badge notifiche nella sidebar
+            // Tutti i prodotti critici sono stati riordinati
+            DashboardResponsabile dash = getDashboard();
+            if (dash != null) {
+                dash.azzeraNotifiche();
+            }
+        });
         bar.add(btnTutti);
 
         JButton btnEsporta = GestisciProdotti.buildPrimaryButton("⬇  Esporta Excel", StyleWMS.BLU_MEDIO);

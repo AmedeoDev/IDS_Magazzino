@@ -21,6 +21,10 @@ public class DashboardResponsabile extends JFrame {
     private JPanel contenutoWrapper;
     private Responsabile responsabileLoggato;
 
+    // ── NOTIFICHE: contatore prodotti sotto scorta non ancora riordinati ──
+    // Viene inizializzato con il numero di righe demo critiche (5 di default)
+    private int notificheCount = 5;
+
     private final String[] VOCI = {
             "Panoramica",
             "Gestisci Prodotti",
@@ -59,6 +63,39 @@ public class DashboardResponsabile extends JFrame {
         wrapper.add(contenutoWrapper, BorderLayout.CENTER);
 
         add(wrapper, BorderLayout.CENTER);
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    // METODI PUBBLICI PER GESTIONE NOTIFICHE
+    // ══════════════════════════════════════════════════════════════
+
+    /**
+     * Decrementa il contatore notifiche di 1 (chiamato da ProdottiSottoScorta
+     * quando si riordina un singolo prodotto).
+     * Se il contatore scende a 0 o meno, lo azzera.
+     */
+    public void decrementaNotifica() {
+        notificheCount = Math.max(0, notificheCount - 1);
+        // Ridisegna la sidebar per aggiornare/rimuovere il badge
+        sidebarPanel.repaint();
+    }
+
+    /**
+     * Azzera completamente il contatore notifiche (chiamato da ProdottiSottoScorta
+     * quando si riordinano tutti i prodotti in una volta sola).
+     */
+    public void azzeraNotifiche() {
+        notificheCount = 0;
+        // Ridisegna la sidebar per rimuovere il badge
+        sidebarPanel.repaint();
+    }
+
+    /**
+     * Restituisce il numero corrente di notifiche attive.
+     * Usato da voceMenu per decidere se mostrare o meno il badge.
+     */
+    public int getNotificheCount() {
+        return notificheCount;
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -154,9 +191,9 @@ public class DashboardResponsabile extends JFrame {
         return avatar;
     }
 
-    // ══════════════════════════════════════════════════════════════
+
     // SIDEBAR
-    // ══════════════════════════════════════════════════════════════
+
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel() {
             @Override
@@ -200,13 +237,17 @@ public class DashboardResponsabile extends JFrame {
 
         // Icona Ikonli associata alla voce
         FontIcon fontIcon = switch (testo) {
-            case "Panoramica"            -> FontIcon.of(Material2OutlinedAL.DASHBOARD,        18, StyleWMS.BIANCO_TALCO);
-            case "Gestisci Prodotti"     -> FontIcon.of(Material2OutlinedAL.CATEGORY,          18, StyleWMS.BIANCO_TALCO);
-            case "Storico Movimenti"     -> FontIcon.of(Material2OutlinedAL.HISTORY,           18, StyleWMS.BIANCO_TALCO);
-            case "Prodotti Sotto Scorta" -> FontIcon.of(Material2OutlinedAL.ERROR_OUTLINE,     18, StyleWMS.BIANCO_TALCO);
-            case "Andamento Magazzino"   -> FontIcon.of(Material2OutlinedMZ.SHOW_CHART,        18, StyleWMS.BIANCO_TALCO);
+            case "Panoramica"            -> FontIcon.of(Material2OutlinedAL.DASHBOARD,          18, StyleWMS.BIANCO_TALCO);
+            case "Gestisci Prodotti"     -> FontIcon.of(Material2OutlinedAL.CATEGORY,           18, StyleWMS.BIANCO_TALCO);
+            case "Storico Movimenti"     -> FontIcon.of(Material2OutlinedAL.HISTORY,            18, StyleWMS.BIANCO_TALCO);
+            case "Prodotti Sotto Scorta" -> FontIcon.of(Material2OutlinedAL.ERROR_OUTLINE,      18, StyleWMS.BIANCO_TALCO);
+            case "Andamento Magazzino"   -> FontIcon.of(Material2OutlinedMZ.SHOW_CHART,         18, StyleWMS.BIANCO_TALCO);
             default                      -> FontIcon.of(Material2OutlinedAL.FIBER_MANUAL_RECORD, 18, StyleWMS.BIANCO_TALCO);
         };
+
+        // ── FLAG: questa voce è quella che mostra il badge notifica
+        // Solo "Prodotti Sotto Scorta" riceve il pallino rosso
+        final boolean hasBadge = "Prodotti Sotto Scorta".equals(testo);
 
         JPanel row = new JPanel() {
             private boolean hovered = false;
@@ -241,6 +282,51 @@ public class DashboardResponsabile extends JFrame {
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setColor(new Color(255, 255, 255, 12));
                     g2.fill(new RoundRectangle2D.Float(8, 0, getWidth() - 16, getHeight(), 12, 12));
+                    g2.dispose();
+                }
+
+                // ── DISEGNO BADGE NOTIFICA (pallino rosso stile Instagram)
+                // Viene mostrato solo se: la voce è "Prodotti Sotto Scorta"
+                // E il contatore è maggiore di 0
+                if (hasBadge && notificheCount > 0) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                    // Testo del badge: numero di prodotti critici ancora da riordinare
+                    String etichetta = String.valueOf(notificheCount);
+                    Font badgeFont = new Font("SansSerif", Font.BOLD, 9);
+                    g2.setFont(badgeFont);
+                    FontMetrics fm = g2.getFontMetrics();
+                    int textW = fm.stringWidth(etichetta);
+
+                    // Diametro minimo 16px; si allarga per numeri a 2 cifre
+                    int badgeDiam = Math.max(16, textW + 8);
+                    int badgeH    = 16;
+
+                    // Coordinata X: vicino al bordo destro del pannello
+                    int badgeX = getWidth() - badgeDiam - 14;
+                    // Coordinata Y: 3px dal bordo superiore del pannello (stile Instagram)
+                    int badgeY = 3;
+
+                    // Ombra leggera per dare profondità al pallino
+                    g2.setColor(new Color(0, 0, 0, 40));
+                    g2.fillRoundRect(badgeX + 1, badgeY + 1, badgeDiam, badgeH, badgeH, badgeH);
+
+                    // Riempimento rosso del badge
+                    g2.setColor(new Color(220, 30, 30));
+                    g2.fillRoundRect(badgeX, badgeY, badgeDiam, badgeH, badgeH, badgeH);
+
+                    // Bordo bianco sottile per staccarsi dallo sfondo blu della sidebar
+                    g2.setColor(new Color(255, 255, 255, 180));
+                    g2.setStroke(new BasicStroke(1.0f));
+                    g2.drawRoundRect(badgeX, badgeY, badgeDiam - 1, badgeH - 1, badgeH, badgeH);
+
+                    // Numero scritto al centro del badge in bianco
+                    g2.setColor(Color.WHITE);
+                    int textX = badgeX + (badgeDiam - textW) / 2;
+                    int textY = badgeY + (badgeH + fm.getAscent() - fm.getDescent()) / 2;
+                    g2.drawString(etichetta, textX, textY);
+
                     g2.dispose();
                 }
             }
@@ -282,11 +368,13 @@ public class DashboardResponsabile extends JFrame {
         return row;
     }
 
-    // ── Navigazione centrale ─────────────────────────────────────
+    // ── Navigazione centrale
     private void navigaA(String sezione) {
         JComponent pannello = switch (sezione) {
             case "Gestisci Prodotti"     -> new GestisciProdotti();
             case "Storico Movimenti"     -> new StoricoMovimenti();
+            // ── Costruttore invariato: ProdottiSottoScorta risale alla dashboard
+            // tramite SwingUtilities.getWindowAncestor() senza bisogno di argomenti ──
             case "Prodotti Sotto Scorta" -> new ProdottiSottoScorta();
             case "Andamento Magazzino"   -> new AndamentoMagazzino();
             default                      -> buildPanoramica();
@@ -298,9 +386,8 @@ public class DashboardResponsabile extends JFrame {
         contenutoWrapper.repaint();
     }
 
-    // ══════════════════════════════════════════════════════════════
     // PANORAMICA
-    // ══════════════════════════════════════════════════════════════
+
     private JScrollPane buildPanoramica() {
         JPanel content = new JPanel();
         content.setOpaque(false);
@@ -335,7 +422,7 @@ public class DashboardResponsabile extends JFrame {
         return scroll;
     }
 
-    // — KPI row —
+    // — KPI per icone
     private JPanel buildKpiRow() {
         JPanel row = new JPanel(new GridLayout(1, 4, 12, 0));
         row.setOpaque(false);
@@ -524,7 +611,6 @@ public class DashboardResponsabile extends JFrame {
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         card.setBorder(new EmptyBorder(4, 20, 4, 16));
 
-        // Icona logout con Ikonli
         FontIcon logoutIcon = FontIcon.of(Material2OutlinedMZ.POWER_SETTINGS_NEW, 16, StyleWMS.BIANCO);
         JLabel ico = new JLabel(logoutIcon);
         ico.setBorder(new EmptyBorder(0, 0, 0, 10));
@@ -555,7 +641,7 @@ public class DashboardResponsabile extends JFrame {
                     "Catanese Napolitano",
                     "amedeoSup@mail.it",
                     "123456",
-                    "SUPER-001"
+                    "DEMO"
             );
             String logo = args.length > 1 ? args[1] : null;
             new DashboardResponsabile(respTesting, logo).setVisible(true);
