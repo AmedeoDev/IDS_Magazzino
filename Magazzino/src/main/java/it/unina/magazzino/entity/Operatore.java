@@ -10,13 +10,4 @@ public class Operatore extends Utente{
     public String getRuolo() {
         return "Operatore";
     }
-
-    public void registraCarico(Operatore operatoreLoggato, Prodotto prodotto, Posizione posizione){
-
-        prodotto.carica();
-
-        posizione.depositaProdotto(prodotto);
-
-        System.out.println("Azione effettuata da: " + operatoreLoggato.getNome());
-    }
 }

@@ -56,7 +56,7 @@ public class Prodotto {
     }
 
     public void carica(int qta){
-        if(qta < 0){
+        if(qta <= 0){
             throw new IllegalArgumentException("La quantità deve essere maggiore di zero!");
         }
 

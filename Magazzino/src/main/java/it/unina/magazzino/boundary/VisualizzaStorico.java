@@ -107,7 +107,7 @@ public class VisualizzaStorico extends JFrame {
         body.add(Box.createVerticalStrut(25));
 
         /* ── Pulsante "Torna alla Home" con Effetto Hover Coordinato ── */
-        btnIndietro = new JButton("Torna alla Home") {
+        btnIndietro = new JButton("Torna indietro") {
             private boolean hovered = false;
 
             {

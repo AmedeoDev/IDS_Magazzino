@@ -8,7 +8,7 @@ public class Posizione {
 
     private Prodotto prodotto;
 
-    public Posizione(String codicePosizione, String area, String scaffale, Prodotto prodotto){
+    public Posizione(String codicePosizione, String area, String scaffale){
 
         if(codicePosizione == null || codicePosizione.trim().isEmpty()){
             throw new IllegalArgumentException("Il codice della posizione è obbligatorio");
@@ -70,6 +70,6 @@ public class Posizione {
     @Override
     public String toString(){
         String stato = isLibero() ? "[LIBERA]" : "[OCCUPATA da " + prodotto.getID() + "]";
-        return "Posizione: " + codicePosizione + "{AREA= " + area + ", SCAFFALE= " + scaffale + "}";
+        return "Posizione: " + codicePosizione + "{AREA= " + area + ", SCAFFALE= " + scaffale + "}" + "(È libero: " + stato + " )";
     }
 }

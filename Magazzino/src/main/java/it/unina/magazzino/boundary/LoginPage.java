@@ -7,7 +7,6 @@ import it.unina.magazzino.control.LoginController;
 import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Responsabile;
 import it.unina.magazzino.entity.Utente;
-import org.apache.xmlbeans.impl.common.Mutex;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -17,9 +16,9 @@ import java.awt.event.MouseEvent;
 
 public class LoginPage extends JFrame {
 
-    private JTextField     txtEmail;
+    private JTextField txtEmail;
     private JPasswordField txtPassword;
-    private JButton        btnAccedi;
+    private JButton btnAccedi;
 
     public LoginPage() {
 
