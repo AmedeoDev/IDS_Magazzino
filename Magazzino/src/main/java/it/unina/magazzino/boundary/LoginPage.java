@@ -162,7 +162,6 @@ public class LoginPage extends JFrame {
             LoginController loginController = new LoginController();
             try {
                 Utente utenteLoggato = loginController.effettuaLogin(email, password);
-                this.dispose();
                 if(utenteLoggato instanceof Operatore){
                     DashboardOperatore dashboardOperatore = new DashboardOperatore((Operatore)utenteLoggato, "");
                     dashboardOperatore.setVisible(true);
@@ -174,6 +173,8 @@ public class LoginPage extends JFrame {
                     DashboardResponsabile dashboardResponsabile = new DashboardResponsabile((Responsabile)utenteLoggato, "");
                     dashboardResponsabile.setVisible(true);
                 }
+
+                this.dispose();
             } catch (Exception ex){
                 JOptionPane.showMessageDialog(this,
                         ex.getMessage(),

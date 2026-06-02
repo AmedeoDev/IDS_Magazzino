@@ -7,13 +7,15 @@ public abstract class Utente {
     private final String email;
     private final String password;
     private final String ID_Utenete;
+    private final String ruolo;
 
-    protected Utente(String nome, String cognome, String email, String password, String ID_Utente){
+    protected Utente(String nome, String cognome, String email, String password, String ID_Utente, String ruolo){
         this.nome = nome;
         this.cognome = cognome;
         this.email = email;
         this.password = password;
         this.ID_Utenete = ID_Utente;
+        this.ruolo = ruolo;
     }
 
     public String getNome() { return this.nome; }

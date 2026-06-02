@@ -21,21 +21,6 @@ public class LoginController {
         UtenteDAO ud = new UtenteDAO();
         Utente utenteTrovato = ud.effettuaLogin(email.trim(), password);
 
-        if(utenteTrovato == null){
-            throw new Exception("Credenziali errate o non trovate");
-        }
-
-        String ruolo = utenteTrovato.getRuolo();
-        if("Operatore".equalsIgnoreCase(ruolo)){
-            DashboardOperatore dashboardOperatore = new DashboardOperatore((Operatore)utenteTrovato, "");
-            dashboardOperatore.setVisible(true);
-        } else if("Responsabile".equalsIgnoreCase(ruolo)){
-            DashboardResponsabile dashboardResponsabile = new DashboardResponsabile((Responsabile)utenteTrovato, "");
-            dashboardResponsabile.setVisible(true);
-        } else{
-            throw new Exception("!!! IMPOSSIBILE ACCEDERE, RUOLO NON ESISTENTE !!!");
-        }
-
         return utenteTrovato;
 
     }
