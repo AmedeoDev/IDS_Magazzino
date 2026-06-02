@@ -1,8 +1,11 @@
 package it.unina.magazzino.control;
 
+import it.unina.magazzino.database.UtenteDAO;
 import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Responsabile;
 import it.unina.magazzino.entity.Utente;
+
+import java.sql.SQLException;
 
 public class RegistrationController {
 
@@ -10,6 +13,7 @@ public class RegistrationController {
      * Gestiamo la logica per garantire una corretta registrazione degli utenti
      * @throws Exception se la validazione fallisce o l'utente risulta già registrato
      */
+
 
     public boolean registraNuovoUtente(String nome, String cognome, String email, String password, String confermaPsw, String ruolo) throws Exception {
 
@@ -74,6 +78,39 @@ public class RegistrationController {
         System.out.println("Registrazione avvenuta con successo...");
         System.out.println("Nuovo utente: " + nuovoUtente.getNome() + " " + nuovoUtente.getCognome()
                 + " [ " + nuovoUtente.getID_Utenete() + " ] { " + nuovoUtente.getRuolo() + " }");
+
+        // creiamo il nuovo utente
+
+        Utente newUser = null;
+        if(ruolo.equalsIgnoreCase("OPERATORE")){
+            newUser = new Operatore(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
+        } else if(ruolo.equalsIgnoreCase("RESPONSABILE")){
+            newUser = new Operatore(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
+        }
+
+        // N.B. ora interagiamo col database, eventuali errori ad esso legati vanno visti qui...
+
+        try{
+            UtenteDAO dao = new UtenteDAO();
+            boolean inserito = dao.RegistraUtente(newUser);
+
+            if(!inserito){
+                throw new Exception("Impossibile salvare l'utente, riprova più tardi");
+            }
+        } catch (SQLException e){
+            // 1062 corrisponde al codice per la ridondanza dei dati
+            if(e.getErrorCode() == 1062){
+                throw new Exception("Questa mail è associata ad un utente già registrato");
+            }
+
+            // gestiamo altri errori
+            System.out.println("Errore SQL: " + e.getMessage());
+            throw new Exception("Errore di connesione al DB.");
+        }
+
+        System.out.println("Registrazione correttamente avvenuta");
+        System.out.println("Nuovo utente salvato nel DB: " + nuovoUtente.getNome() + " " + nuovoUtente.getCognome()
+                            + " [ " + nuovoUtente.getID_Utenete() + " ] { " + nuovoUtente.getRuolo() + " }");
 
         return true;
     }
