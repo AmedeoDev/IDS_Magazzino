@@ -8,11 +8,13 @@ public class Prodotto {
     private String categoria;
     private String nome;
     private String descrizione;
+    private String IdPos;
+    private String IdUtenteResponsabile;
     private int qtaDisponibile;
     private Integer sogliaMinima;
 
 
-    public Prodotto(String id, String categoria, String nome, String descrizione, int qtaDisponibile, Integer sogliaMinima){
+    public Prodotto(String id, String categoria, String nome, String descrizione, int qtaDisponibile, Integer sogliaMinima, String IdPos, String IdUtenteResponsabile){
 
         if (qtaDisponibile < 0){
             throw new IllegalArgumentException("La quantità non può essere minore di 0!");
@@ -28,6 +30,8 @@ public class Prodotto {
         this.descrizione = descrizione;
         this.qtaDisponibile = qtaDisponibile;
         this.sogliaMinima = sogliaMinima;
+        this.IdPos = IdPos;
+        this.IdUtenteResponsabile = IdUtenteResponsabile;
     }
 
     public String getID(){ return this.id; }
@@ -36,6 +40,8 @@ public class Prodotto {
     public String getNome() { return this.nome; }
     public String getDescrizione() { return this.descrizione; }
     public int getQtaDisponibile() { return this.qtaDisponibile; }
+    public String getIdPos() { return this.IdPos; }
+    public String getIdUtenteResponsabile() { return this.IdUtenteResponsabile; }
 
     public Integer getSogliaMinima(){
         return this.sogliaMinima;

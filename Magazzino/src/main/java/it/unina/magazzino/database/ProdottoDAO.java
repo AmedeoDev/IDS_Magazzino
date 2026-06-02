@@ -20,14 +20,16 @@ public class ProdottoDAO {
             ResultSet result = stmt.executeQuery();
 
             if(result.next()){
-                Integer soglia = (Integer) result.getObject("soglia_minima");
+                Integer soglia = (Integer) result.getObject("SogliaMinima");
                 return new Prodotto(
-                        result.getString("id"),
-                        result.getString("categoria"),
-                        result.getString("nome"),
-                        result.getString("descrizione"),
-                        result.getByte("qta_disponibile"),
-                        soglia
+                        result.getString("IdProd"),
+                        result.getString("Categoria"),
+                        result.getString("Nome"),
+                        result.getString("Descrizione"),
+                        result.getInt("QtaDisp"),
+                        soglia,
+                        result.getString("IdPos"),
+                        result.getString("IdUtenteResponsabile")
                 );
             }
         }
