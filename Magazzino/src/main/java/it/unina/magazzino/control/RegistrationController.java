@@ -93,7 +93,7 @@ public class RegistrationController {
             newUser = new Responsabile(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
         }
 
-        // N.B. ora interagiamo col database, eventuali errori ad esso legati vanno visti qui...
+        // N.B. ora interagiamo col database, eventuali errori ad esso legati vanno risolit qui...
 
         try{
             UtenteDAO dao = new UtenteDAO();
