@@ -5,6 +5,7 @@ import it.unina.magazzino.entity.Prodotto;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.UUID;
 
 public class ProdottoController {
 
@@ -20,16 +21,18 @@ public class ProdottoController {
         }
     }
 
-    public boolean registraNuovoProdotto(String id, String nome, String categoria, String descrizione, int qtaDisp, int sogliaMinima, String idPos, String iDUtenteResp) throws Exception{
+    public boolean registraNuovoProdotto(String nome, String categoria, String descrizione, int qtaDisp, int sogliaMinima, String idPos, String iDUtenteResp) throws Exception{
 
         // controlli di base
-        if(id == null || id.trim().isEmpty()) throw new Exception("L'id non può essere vuoto");
         if(nome == null || nome.trim().isEmpty()) throw new Exception("Il nome non può essere vuoto");
         if(categoria == null || categoria.trim().isEmpty()) throw new Exception("La categoria non può essere vuota");
         if(qtaDisp <= 0) throw new Exception("Inserisci una quantità valida!");
         if(sogliaMinima < 0) throw new Exception("Inserisci una soglia minima valida!");
 
-        Prodotto nProdotto = new Prodotto(id, categoria, nome, descrizione, qtaDisp, sogliaMinima, idPos, iDUtenteResp);
+
+        String idGenerato = "P-" + UUID.randomUUID().toString().substring(0, 2).toUpperCase();
+
+        Prodotto nProdotto = new Prodotto(idGenerato, categoria, nome, descrizione, qtaDisp, sogliaMinima, idPos, iDUtenteResp);
 
         try{
 

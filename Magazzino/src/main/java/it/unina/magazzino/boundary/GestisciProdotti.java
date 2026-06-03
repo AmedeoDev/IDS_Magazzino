@@ -2,6 +2,10 @@ package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
 import it.unina.magazzino.boundary.utils.ExcelExporter;
+import it.unina.magazzino.control.ProdottoController;
+
+import it.unina.magazzino.entity.Prodotto;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -9,6 +13,7 @@ import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
+import java.util.List;
 
 /**
  * Pannello "Gestisci Prodotti" — RF04 / RF05 / RF06 / RF07
@@ -37,19 +42,35 @@ public class GestisciProdotti extends JPanel {
             "ID", "Nome Prodotto", "Categoria", "Quantità", "Soglia Min.", "Posizione"
     };
 
-    // Dati demo — soglia "—" = non impostata
-    private Object[][] datiDemo = {
-            {"000011", "Guanti latex",       "Sicurezza",   "3",   "10",          "A-01-S01"},
-            {"000045", "Nastro da imballo",  "Imballaggio", "1",   "5",           "B-03-S02"},
-            {"000078", "Scatole S",          "Imballaggio", "4",   "20",          "B-03-S03"},
-            {"000102", "Etichette adesive",  "Cancelleria", "8",   "15",          "C-07-S01"},
-            {"000134", "Pallets 80x120",     "Logistica",   "2",   "6",           "D-01-S00"},
-            {"000156", "Bolla cartone",      "Imballaggio", "55",  SOGLIA_ASSENTE,"B-04-S01"},
-            {"000178", "Elmetti gialli",     "Sicurezza",   "20",  "5",           "A-02-S01"},
-            {"000201", "Guanti nitrile",     "Sicurezza",   "34",  SOGLIA_ASSENTE,"A-01-S02"},
-            {"000222", "Cutter 18mm",        "Utensili",    "9",   "4",           "E-01-S01"},
-            {"000244", "Fascette cavi",      "Elettrico",   "120", "30",          "F-02-S01"},
-    };
+    public void caricaDatiDalDatabase(){
+        tableModel.setRowCount(0);
+
+        ProdottoController controller = new ProdottoController();
+        List<Prodotto> inventario = controller.getAllProdotti();
+
+        if(inventario != null){
+            for(Prodotto p : inventario){
+
+                String sogliaStr = (p.getSogliaMinima() > 0) ? String.valueOf(p.getSogliaMinima()) : SOGLIA_ASSENTE;
+
+                Object[] riga = {
+                        p.getID(),
+                        p.getNome(),
+                        p.getCategoria(),
+                        p.getDescrizione(),
+                        p.getQtaDisponibile(),
+                        p.getSogliaMinima(),
+                        p.getIdPos(),
+                        p.getIdUtenteResponsabile()
+                };
+
+                tableModel.addRow(riga);
+
+            }
+        }
+    }
+
+
 
     public GestisciProdotti() {
         setOpaque(false);
@@ -59,6 +80,8 @@ public class GestisciProdotti extends JPanel {
         add(buildToolbar(), BorderLayout.NORTH);
         add(buildTablePanel(), BorderLayout.CENTER);
         add(buildBottomBar(), BorderLayout.SOUTH);
+
+        caricaDatiDalDatabase();
     }
 
     // ── Toolbar ───────────────────────────────────────────────────
@@ -110,7 +133,8 @@ public class GestisciProdotti extends JPanel {
         panel.setLayout(new BorderLayout());
         panel.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        tableModel = new DefaultTableModel(datiDemo, COLONNE) {
+        tableModel = new DefaultTableModel(new Object[][]{}, COLONNE) {
+            @Override
             public boolean isCellEditable(int r, int c) { return false; }
         };
         tabella = new JTable(tableModel);
@@ -216,12 +240,13 @@ public class GestisciProdotti extends JPanel {
     }
 
     // ── Dialog aggiungi / modifica ───────────────────────────────
+    // ── Dialog aggiungi / modifica ───────────────────────────────
     private void apriDialogProdotto(Integer modelRow) {
         boolean isModifica = modelRow != null;
         JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
                 isModifica ? "Modifica Prodotto" : "Aggiungi Prodotto",
                 Dialog.ModalityType.APPLICATION_MODAL);
-        dialog.setSize(440, 430);
+        dialog.setSize(440, 480);
         dialog.setLocationRelativeTo(this);
         dialog.setResizable(false);
 
@@ -237,11 +262,13 @@ public class GestisciProdotti extends JPanel {
         root.add(titoloLbl);
         root.add(Box.createVerticalStrut(20));
 
-        // Campi — indice 4 è la soglia, trattata separatamente
-        String[] labels = {"ID Prodotto", "Nome", "Categoria", "Quantità", "Soglia Min.", "Posizione"};
+        // Rimosso l'ID, i campi sono 6
+        String[] labels = {"Nome", "Categoria", "Descrizione", "Quantità", "Soglia Min.", "Posizione"};
         JTextField[] fields = new JTextField[labels.length];
 
-        // Checkbox "soglia non impostata" — visibile solo per il campo soglia
+        // INDICE CORRETTO: La soglia ora si trova all'indice 4!
+        final int DIALOG_INDEX_SOGLIA = 4;
+
         JCheckBox chkNessunaSoglia = new JCheckBox("Non impostare soglia minima");
         chkNessunaSoglia.setFont(new Font("SansSerif", Font.PLAIN, 11));
         chkNessunaSoglia.setForeground(new Color(120, 120, 120));
@@ -265,22 +292,30 @@ public class GestisciProdotti extends JPanel {
                     new EmptyBorder(6, 10, 6, 10)));
 
             if (isModifica) {
-                String val = tableModel.getValueAt(modelRow, i).toString();
+                // Riassegniamo i valori considerando che la tabella visiva ha ancora l'ID alla colonna 0
+                String val = "";
+                if(i == 0) val = tableModel.getValueAt(modelRow, 1).toString(); // Nome
+                if(i == 1) val = tableModel.getValueAt(modelRow, 2).toString(); // Categoria
+                if(i == 2) val = "";                                            // Descrizione (Non presente in tabella)
+                if(i == 3) val = tableModel.getValueAt(modelRow, 3).toString(); // Qty
+                if(i == 4) val = tableModel.getValueAt(modelRow, 4).toString(); // Soglia
+                if(i == 5) val = tableModel.getValueAt(modelRow, 5).toString(); // Posizione
+
                 fields[i].setText(val);
-                if (i == COL_SOGLIA && SOGLIA_ASSENTE.equals(val)) {
+
+                if (i == DIALOG_INDEX_SOGLIA && SOGLIA_ASSENTE.equals(val)) {
                     chkNessunaSoglia.setSelected(true);
                     fields[i].setEnabled(false);
                     fields[i].setText("");
                 }
             }
-            if (i == 0 && isModifica) fields[i].setEnabled(false);
 
             riga.add(lbl, BorderLayout.WEST);
             riga.add(fields[i], BorderLayout.CENTER);
             root.add(riga);
 
-            // Subito dopo il campo soglia: checkbox opzionale
-            if (i == COL_SOGLIA) {
+            // Ora la checkbox si legherà al campo giusto
+            if (i == DIALOG_INDEX_SOGLIA) {
                 root.add(Box.createVerticalStrut(2));
                 JPanel chkWrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
                 chkWrap.setOpaque(false);
@@ -290,7 +325,6 @@ public class GestisciProdotti extends JPanel {
                 chkWrap.add(chkNessunaSoglia);
                 root.add(chkWrap);
 
-                // Listener: abilita/disabilita il campo soglia
                 final JTextField fieldSoglia = fields[i];
                 chkNessunaSoglia.addActionListener(ev -> {
                     boolean noSoglia = chkNessunaSoglia.isSelected();
@@ -313,50 +347,68 @@ public class GestisciProdotti extends JPanel {
 
         JButton btnSalva = buildPrimaryButton(isModifica ? "Salva" : "Aggiungi", StyleWMS.BLU_ACCIAIO);
         btnSalva.addActionListener(e -> {
-            // Validazione: tutti i campi obbligatori tranne soglia (se disabilitata)
+
             for (int i = 0; i < fields.length; i++) {
-                boolean obbligatorio = fields[i].isEnabled() && i != COL_SOGLIA;
+                boolean obbligatorio = fields[i].isEnabled() && i != DIALOG_INDEX_SOGLIA;
                 if (obbligatorio && fields[i].getText().trim().isEmpty()) {
                     mostraAvviso("Il campo «" + labels[i] + "» è obbligatorio.");
                     fields[i].requestFocus();
                     return;
                 }
             }
-            // Soglia: se abilitata deve essere un intero ≥ 0
-            if (fields[COL_SOGLIA].isEnabled()) {
-                String s = fields[COL_SOGLIA].getText().trim();
+
+            if (fields[DIALOG_INDEX_SOGLIA].isEnabled()) {
+                String s = fields[DIALOG_INDEX_SOGLIA].getText().trim();
                 if (!s.isEmpty()) {
                     try { if (Integer.parseInt(s) < 0) throw new NumberFormatException(); }
                     catch (NumberFormatException ex) {
                         mostraAvviso("La soglia minima deve essere un numero intero ≥ 0.");
-                        fields[COL_SOGLIA].requestFocus();
+                        fields[DIALOG_INDEX_SOGLIA].requestFocus();
                         return;
                     }
                 }
             }
 
-            // Determina valore soglia finale
             String sogliaFinal;
-            if (!fields[COL_SOGLIA].isEnabled() || fields[COL_SOGLIA].getText().trim().isEmpty()) {
+            if (!fields[DIALOG_INDEX_SOGLIA].isEnabled() || fields[DIALOG_INDEX_SOGLIA].getText().trim().isEmpty()) {
                 sogliaFinal = SOGLIA_ASSENTE;
             } else {
-                sogliaFinal = fields[COL_SOGLIA].getText().trim();
+                sogliaFinal = fields[DIALOG_INDEX_SOGLIA].getText().trim();
             }
 
-            if (isModifica) {
-                for (int i = 0; i < fields.length; i++) {
-                    if (i == COL_SOGLIA)
-                        tableModel.setValueAt(sogliaFinal, modelRow, i);
-                    else
-                        tableModel.setValueAt(fields[i].getText().trim(), modelRow, i);
+            try {
+                // Nuovi indici spostati
+                String nome = fields[0].getText().trim();
+                String categoria = fields[1].getText().trim();
+                String descrizione = fields[2].getText().trim();
+                int qtDisp = Integer.parseInt(fields[3].getText().trim());
+                int sogliaMinima = sogliaFinal.equals(SOGLIA_ASSENTE) ? 0 : Integer.parseInt(sogliaFinal);
+                String posizione = fields[5].getText().trim();
+
+                String idOperatore = "OP-1";
+
+                ProdottoController pController = new ProdottoController();
+
+                if (isModifica) {
+                    tableModel.setValueAt(nome, modelRow, 1);
+                    tableModel.setValueAt(categoria, modelRow, 2);
+                    tableModel.setValueAt(String.valueOf(qtDisp), modelRow, 3);
+                    tableModel.setValueAt(sogliaFinal, modelRow, 4);
+                    tableModel.setValueAt(posizione, modelRow, 5);
+                } else {
+                    boolean successo = pController.registraNuovoProdotto(nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idOperatore);
+
+                    if(successo){
+                        caricaDatiDalDatabase(); // Questo mostrerà l'ID autogenerato!
+                        JOptionPane.showMessageDialog(dialog, "Prodotto salvato con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+                    }
                 }
-            } else {
-                Object[] nuovaRiga = new Object[fields.length];
-                for (int i = 0; i < fields.length; i++)
-                    nuovaRiga[i] = (i == COL_SOGLIA) ? sogliaFinal : fields[i].getText().trim();
-                tableModel.addRow(nuovaRiga);
+
+                dialog.dispose();
+
+            } catch (Exception ex){
+                mostraAvviso(ex.getMessage());
             }
-            dialog.dispose();
         });
 
         btnPanel.add(btnAnnulla);
@@ -364,6 +416,7 @@ public class GestisciProdotti extends JPanel {
         root.add(btnPanel);
 
         dialog.setContentPane(root);
+        dialog.getRootPane().setDefaultButton(btnSalva);
         dialog.setVisible(true);
     }
 

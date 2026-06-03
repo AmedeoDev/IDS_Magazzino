@@ -15,19 +15,31 @@ public class UtenteDAO {
 
         String query = "INSERT INTO utente (IdUtente, Nome, Cognome, Email, Password, ruolo) VALUES (?, ?, ?, ?, ?, ?)";
 
-        try(Connection conn = DBConnectionManager.getConnection();
-        PreparedStatement stmt = conn.prepareStatement(query)){
+        String queryOperator = "INSERT INTO operatore (IdUtenteOperatore) VALUES (?)";
+        String queryResp = "INSERT INTO responsabile (IdUtenteResponsabile) VALUES (?)";
 
-            stmt.setString(1, nuovoUtente.getID_Utenete());
-            stmt.setString(2, nuovoUtente.getNome());
-            stmt.setString(3, nuovoUtente.getCognome());
-            stmt.setString(4, nuovoUtente.getEmail());
-            stmt.setString(5, nuovoUtente.getPassword());
-            stmt.setString(6, nuovoUtente.getRuolo());
+        Connection conn = DBConnectionManager.getConnection();
 
-            int righeInserite = stmt.executeUpdate();
-            return righeInserite > 0;
+        try {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement stmt = conn.prepareStatement(query)) {
+                stmt.setString(1, nuovoUtente.getID_Utenete());
+                stmt.setString(2, nuovoUtente.getNome());
+                stmt.setString(3, nuovoUtente.getCognome());
+                stmt.setString(4, nuovoUtente.getEmail());
+                stmt.setString(5, nuovoUtente.getPassword());
+                stmt.setString(6, nuovoUtente.getRuolo());
+                stmt.executeUpdate();
+            }
+
+            String queryRuolo = nuovoUtente instanceof Responsabile ? queryResp : queryOperator;
+            try (){
+
+            }
         }
+
+
     }
 
 

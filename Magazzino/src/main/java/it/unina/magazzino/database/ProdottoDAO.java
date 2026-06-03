@@ -14,6 +14,11 @@ public class ProdottoDAO {
         try (Connection con = DBConnectionManager.getConnection();
              PreparedStatement stmt = con.prepareStatement(query)){
 
+
+            // debug per problemi legati alla generazione dell'ID
+            System.out.println(">>> DEBUG <<<");
+            System.out.println("IdProd: " + p.getID() + " Lunghezza: " + (p.getID() != null ? p.getID().length() : 0));
+
             stmt.setString(1, p.getID());
             stmt.setString(2, p.getNome());
             stmt.setString(3, p.getCategoria());
