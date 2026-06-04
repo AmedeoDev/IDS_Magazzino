@@ -34,9 +34,19 @@ public class UtenteDAO {
             }
 
             String queryRuolo = nuovoUtente instanceof Responsabile ? queryResp : queryOperator;
-            try (){
-
+            try (PreparedStatement stmt = conn.prepareStatement(queryRuolo)){
+                stmt.setString(1,nuovoUtente.getID_Utenete());
+                stmt.executeUpdate();
             }
+
+            conn.commit();
+            return true;
+        } catch (SQLException e){
+
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
         }
 
 

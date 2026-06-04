@@ -8,6 +8,26 @@ import java.util.List;
 
 public class ProdottoDAO {
 
+    public List<String> getPosizioniLibere() throws SQLException {
+        List<String> posizioni = new ArrayList<>();
+
+        String query = """
+                SELECT IdPos FROM posizione
+                WHERE IdPos NOT IN (
+                    SELECT IdPos FROM prodotto WHERE IdPos IS NOT NULL)
+                """;
+
+        try (Connection conn = DBConnectionManager.getConnection();
+            PreparedStatement stmt = conn.prepareStatement(query);
+            ResultSet rs = stmt.executeQuery()){
+                while(rs.next()){
+                    posizioni.add(rs.getString("IdPos"));
+                }
+        }
+
+        return posizioni;
+    }
+
     public boolean aggiungiProdotto(Prodotto p) throws SQLException{
         String query = "INSERT INTO prodotto (IdProd, Nome, Categoria, Descrizione, QtaDisp, SogliaMinima, IdPos, IdUtenteResponsabile) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 

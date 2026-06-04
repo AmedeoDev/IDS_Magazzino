@@ -371,7 +371,7 @@ public class DashboardResponsabile extends JFrame {
     // ── Navigazione centrale
     private void navigaA(String sezione) {
         JComponent pannello = switch (sezione) {
-            case "Gestisci Prodotti"     -> new GestisciProdotti();
+            case "Gestisci Prodotti"     -> new GestisciProdotti(responsabileLoggato.getID_Utenete());
             case "Storico Movimenti"     -> new StoricoMovimenti();
             // ── Costruttore invariato: ProdottiSottoScorta risale alla dashboard
             // tramite SwingUtilities.getWindowAncestor() senza bisogno di argomenti ──

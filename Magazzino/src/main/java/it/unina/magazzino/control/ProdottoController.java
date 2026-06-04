@@ -4,6 +4,7 @@ import it.unina.magazzino.database.ProdottoDAO;
 import it.unina.magazzino.entity.Prodotto;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +19,16 @@ public class ProdottoController {
         } catch (SQLException e){
             e.printStackTrace();
             return null;
+        }
+    }
+
+    public List<String> getPosizioniDisponibili(){
+        try {
+            ProdottoDAO dao = new ProdottoDAO();
+            return dao.getPosizioniLibere();
+        } catch (SQLException e){
+            e.printStackTrace();
+            return new ArrayList<>();
         }
     }
 

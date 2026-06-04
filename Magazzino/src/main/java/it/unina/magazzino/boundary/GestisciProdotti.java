@@ -32,6 +32,8 @@ public class GestisciProdotti extends JPanel {
     private TableRowSorter<DefaultTableModel> sorter;
     private JTextField campoCerca;
 
+    private final String idResponsabile;
+
     // Indice colonna soglia minima (0-based)
     private static final int COL_QTY    = 3;
     private static final int COL_SOGLIA = 4;
@@ -72,7 +74,8 @@ public class GestisciProdotti extends JPanel {
 
 
 
-    public GestisciProdotti() {
+    public GestisciProdotti(String idResponsabile) {
+        this.idResponsabile = idResponsabile;
         setOpaque(false);
         setLayout(new BorderLayout(0, 16));
         setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -385,8 +388,6 @@ public class GestisciProdotti extends JPanel {
                 int sogliaMinima = sogliaFinal.equals(SOGLIA_ASSENTE) ? 0 : Integer.parseInt(sogliaFinal);
                 String posizione = fields[5].getText().trim();
 
-                String idOperatore = "OP-1";
-
                 ProdottoController pController = new ProdottoController();
 
                 if (isModifica) {
@@ -396,7 +397,7 @@ public class GestisciProdotti extends JPanel {
                     tableModel.setValueAt(sogliaFinal, modelRow, 4);
                     tableModel.setValueAt(posizione, modelRow, 5);
                 } else {
-                    boolean successo = pController.registraNuovoProdotto(nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idOperatore);
+                    boolean successo = pController.registraNuovoProdotto(nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idResponsabile);
 
                     if(successo){
                         caricaDatiDalDatabase(); // Questo mostrerà l'ID autogenerato!
