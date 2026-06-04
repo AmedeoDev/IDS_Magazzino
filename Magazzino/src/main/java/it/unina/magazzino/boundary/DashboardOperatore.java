@@ -20,11 +20,6 @@ public class DashboardOperatore extends JFrame {
 
     private Operatore operatoreLoggato;
 
-    // ── Costruttore ───────────────────────────────────────────────
-    /**
-     * @param logoPath    Percorso al file immagine del logo (es. "assets/logo.png").
-     * Con null ottengo il badge testuale "WMS" come fallback.
-     */
     public DashboardOperatore(Operatore operatore, String logoPath) {
 
         this.operatoreLoggato = operatore;
@@ -62,12 +57,12 @@ public class DashboardOperatore extends JFrame {
         body.add(Box.createVerticalStrut(10));
 
         List<Prodotto> prodotti = List.of(
-                new Prodotto("Prodotto Alpha",   "SKU-001", 42),
-                new Prodotto("Prodotto Beta",    "SKU-002", 17),
-                new Prodotto("Prodotto Gamma",   "SKU-003", 88),
-                new Prodotto("Prodotto Delta",   "SKU-004",  5),
-                new Prodotto("Prodotto Epsilon", "SKU-005", 31),
-                new Prodotto("Prodotto Zeta",    "SKU-006", 60)
+                new Prodotto("Prodotto Alpha",   "001", 42),
+                new Prodotto("Prodotto Beta",    "002", 17),
+                new Prodotto("Prodotto Gamma",   "003", 88),
+                new Prodotto("Prodotto Delta",   "004",  5),
+                new Prodotto("Prodotto Epsilon", "005", 31),
+                new Prodotto("Prodotto Zeta",    "006", 60)
         );
         body.add(buildProductsGrid(prodotti));
         body.add(Box.createVerticalStrut(16));
