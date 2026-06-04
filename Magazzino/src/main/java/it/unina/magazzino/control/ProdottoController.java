@@ -32,6 +32,16 @@ public class ProdottoController {
         }
     }
 
+    public boolean aggiornaQuantitaProdotto(String idProd, int nQta){
+        try {
+            ProdottoDAO dao = new ProdottoDAO();
+            return dao.aggiornaQuantita(idProd, nQta);
+        } catch (SQLException e){
+            System.out.println("Errore di aggiornamento: " + e.getMessage());
+            return false;
+        }
+    }
+
     public boolean registraNuovoProdotto(String nome, String categoria, String descrizione, int qtaDisp, int sogliaMinima, String idPos, String iDUtenteResp) throws Exception{
 
         // controlli di base

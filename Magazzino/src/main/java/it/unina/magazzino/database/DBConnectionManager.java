@@ -13,7 +13,7 @@ public class DBConnectionManager {
 
     private static final String URL = "jdbc:mysql://localhost:3306/magazzino";
     private static final String USER = "root";
-    private static final String PSW = "wmsSQL_PSWseCuRe#1#2#!!$";
+    private static final String PSW = "adminSQLP_assword#12";
 
 
     static {

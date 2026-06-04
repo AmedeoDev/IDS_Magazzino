@@ -1,8 +1,11 @@
 package it.unina.magazzino.control;
 
+import it.unina.magazzino.database.ProdottoDAO;
 import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Posizione;
 import it.unina.magazzino.entity.Prodotto;
+
+import java.sql.SQLException;
 
 public class MovimentoController {
 

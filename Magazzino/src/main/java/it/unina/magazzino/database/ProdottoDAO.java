@@ -54,6 +54,18 @@ public class ProdottoDAO {
         }
     }
 
+    public boolean aggiornaQuantita(String idProd, int nQta) throws SQLException{
+        String query = "UPDATE prodotto SET QtaDisp = ? WHERE IdProd = ?";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+            stmt.setInt(1, nQta);
+            stmt.setString(2, idProd);
+
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public List<Prodotto> getProdotti() throws SQLException{
 
         List<Prodotto> inventario = new ArrayList<>();

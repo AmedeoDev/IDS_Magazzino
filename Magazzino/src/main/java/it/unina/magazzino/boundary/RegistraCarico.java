@@ -1,7 +1,9 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.ProdottoController;
 import it.unina.magazzino.entity.Operatore;
+import it.unina.magazzino.entity.Prodotto;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,6 +12,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -62,14 +65,26 @@ public class RegistraCarico extends JFrame {
         setContentPane(root);
     }
 
-    // ── Dati di esempio (da sostituire con chiamate al DAO) ───────
+    // ── Dati presi dal DB - copiato da Scarico ───────
     private void inizializzaCatalogo() {
-        catalogo.put("SKU-001", new String[]{"Prodotto A",   "42"});
-        catalogo.put("SKU-002", new String[]{"Prodotto B",    "17"});
-        catalogo.put("SKU-003", new String[]{"Prodotto C",   "88"});
-        catalogo.put("SKU-004", new String[]{"Prodotto D",    "5"});
-        catalogo.put("SKU-005", new String[]{"Prodotto E", "31"});
-        catalogo.put("SKU-006", new String[]{"Prodotto F",    "60"});
+        // Formato: nome | quantità | sogliaMinima
+        catalogo.clear();
+        try {
+            ProdottoController controller = new ProdottoController();
+            List<Prodotto> inventario = controller.getAllProdotti();
+
+            if(inventario != null){
+                for(Prodotto p : inventario){
+                    catalogo.put(p.getID(), new String[]{
+                            p.getNome(),
+                            String.valueOf(p.getQtaDisponibile()),
+                            String.valueOf(p.getSogliaMinima())
+                    });
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Errore durante il caricamento del catalogo: " + e.getMessage());
+        }
     }
 
     // ── Header blu ────────────────────────────────────────────────
@@ -238,6 +253,21 @@ public class RegistraCarico extends JFrame {
         // Aggiorna la disponibilità nel modello dati
         String[] dati = catalogo.get(skuSelezionato);
         int nuovaQty = Integer.parseInt(dati[1]) + quantita;
+
+        try {
+            ProdottoController controller = new ProdottoController();
+            boolean savingOk = controller.aggiornaQuantitaProdotto(skuSelezionato, nuovaQty);
+
+            if(!savingOk){
+                JOptionPane.showMessageDialog(this, "Errore di caricamento");
+                return;
+            }
+        } catch (Exception ex){
+            JOptionPane.showMessageDialog(this, "Errore DB: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+
         dati[1] = String.valueOf(nuovaQty);
 
         // Aggiorna la voce nella JList

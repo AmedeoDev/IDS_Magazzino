@@ -1,7 +1,9 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.ProdottoController;
 import it.unina.magazzino.entity.Operatore;
+import it.unina.magazzino.entity.Prodotto;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,6 +12,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -66,15 +69,26 @@ public class RegistraScarico extends JFrame {
         setContentPane(root);
     }
 
-    // ── Dati di esempio (da sostituire con chiamate al DAO) ───────
+    // ── Dati presi dal DB ───────
     private void inizializzaCatalogo() {
         // Formato: nome | quantità | sogliaMinima
-        catalogo.put("001", new String[]{"Prodotto A",   "42", "10"});
-        catalogo.put("002", new String[]{"Prodotto B",    "17",  "5"});
-        catalogo.put("003", new String[]{"Prodotto C",   "88", "20"});
-        catalogo.put("004", new String[]{"Prodotto D",    "5",  "8"});
-        catalogo.put("005", new String[]{"Prodotto E", "31", "10"});
-        catalogo.put("006", new String[]{"Prodotto F",    "60", "15"});
+        catalogo.clear();
+        try {
+            ProdottoController controller = new ProdottoController();
+            List<Prodotto> inventario = controller.getAllProdotti();
+
+            if(inventario != null){
+                for(Prodotto p : inventario){
+                    catalogo.put(p.getID(), new String[]{
+                            p.getNome(),
+                            String.valueOf(p.getQtaDisponibile()),
+                            String.valueOf(p.getSogliaMinima())
+                    });
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Errore durante il caricamento del catalogo: " + e.getMessage());
+        }
     }
 
     // ── Header blu ────────────────────────────────────────────────
