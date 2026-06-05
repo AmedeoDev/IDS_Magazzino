@@ -69,4 +69,16 @@ public class ProdottoController {
             throw new Exception("Errore: impossibile connettersi al database.\n[ERR-TYPE: " + e.getMessage() + " ]");
         }
     }
+
+    public boolean modificaProdotto(String idProd, String nome, String categoria, String descrizione, int qtDisp, int sogliaMinima, String posizione, String idResponsabile) {
+
+        try {
+            ProdottoDAO dao = new ProdottoDAO();
+            return dao.aggiornaProdottoCompleto(idProd, nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idResponsabile);
+        } catch (Exception e){
+            System.out.println("Errore modifica prodotto: " + e.getMessage());
+            return false;
+        }
+
+    }
 }

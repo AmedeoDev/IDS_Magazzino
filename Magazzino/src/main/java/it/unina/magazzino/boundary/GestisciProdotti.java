@@ -59,10 +59,9 @@ public class GestisciProdotti extends JPanel {
                         p.getID(),
                         p.getNome(),
                         p.getCategoria(),
-                        p.getDescrizione(),
                         p.getQtaDisponibile(),
-                        p.getSogliaMinima(),
                         p.getIdPos(),
+                        sogliaStr,
                         p.getIdUtenteResponsabile()
                 };
 
@@ -242,7 +241,7 @@ public class GestisciProdotti extends JPanel {
         return bar;
     }
 
-    // ── Dialog aggiungi / modifica ───────────────────────────────
+
     // ── Dialog aggiungi / modifica ───────────────────────────────
     private void apriDialogProdotto(Integer modelRow) {
         boolean isModifica = modelRow != null;
@@ -391,11 +390,15 @@ public class GestisciProdotti extends JPanel {
                 ProdottoController pController = new ProdottoController();
 
                 if (isModifica) {
-                    tableModel.setValueAt(nome, modelRow, 1);
-                    tableModel.setValueAt(categoria, modelRow, 2);
-                    tableModel.setValueAt(String.valueOf(qtDisp), modelRow, 3);
-                    tableModel.setValueAt(sogliaFinal, modelRow, 4);
-                    tableModel.setValueAt(posizione, modelRow, 5);
+
+                    String idProd = tableModel.getValueAt(modelRow, 0).toString();
+                    boolean successo = pController.modificaProdotto(idProd, nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idResponsabile);
+
+                    if(successo){
+                        caricaDatiDalDatabase();
+                        JOptionPane.showMessageDialog(dialog, "Prodotto modificato con successo", "Successo", JOptionPane.INFORMATION_MESSAGE);
+                    }
+
                 } else {
                     boolean successo = pController.registraNuovoProdotto(nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idResponsabile);
 
