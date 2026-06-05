@@ -1,7 +1,9 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.ProdottoController;
 import it.unina.magazzino.entity.Operatore;
+import it.unina.magazzino.entity.Prodotto;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -14,9 +16,6 @@ import java.util.List;
 import javax.imageio.ImageIO;
 
 public class DashboardOperatore extends JFrame {
-
-    // ── Prodotto ─────────────────────────────────────────────────
-    record Prodotto(String nome, String sku, int quantita) {}
 
     private Operatore operatoreLoggato;
 
@@ -56,14 +55,18 @@ public class DashboardOperatore extends JFrame {
         body.add(buildSectionLabel("Prodotti in magazzino"));
         body.add(Box.createVerticalStrut(10));
 
-        List<Prodotto> prodotti = List.of(
-                new Prodotto("Prodotto Alpha",   "001", 42),
-                new Prodotto("Prodotto Beta",    "002", 17),
-                new Prodotto("Prodotto Gamma",   "003", 88),
-                new Prodotto("Prodotto Delta",   "004",  5),
-                new Prodotto("Prodotto Epsilon", "005", 31),
-                new Prodotto("Prodotto Zeta",    "006", 60)
-        );
+        ProdottoController controller = new ProdottoController();
+        List<Prodotto> prodotti = controller.getAllProdotti();
+
+        if(prodotti != null && !prodotti.isEmpty()){
+            body.add(buildProductsGrid(prodotti));
+        } else {
+            JLabel vuoto = new JLabel("Nessun prodotto presente in magazzino");
+            vuoto.setFont(new Font("SansSerif", Font.ITALIC, 12));
+            vuoto.setForeground(StyleWMS.GRIGIO_TESTO);
+            body.add(vuoto);
+        }
+
         body.add(buildProductsGrid(prodotti));
         body.add(Box.createVerticalStrut(16));
         body.add(buildFooter());
@@ -301,16 +304,16 @@ public class DashboardOperatore extends JFrame {
         JPanel testi = new JPanel();
         testi.setOpaque(false);
         testi.setLayout(new BoxLayout(testi, BoxLayout.Y_AXIS));
-        JLabel nome = new JLabel(p.nome());
+        JLabel nome = new JLabel(p.getNome());
         nome.setFont(new Font("SansSerif", Font.BOLD, 12));
         nome.setForeground(StyleWMS.ANTRACITE);
-        JLabel sku = new JLabel(p.sku());
+        JLabel sku = new JLabel(p.getID());
         sku.setFont(new Font("SansSerif", Font.PLAIN, 10));
         sku.setForeground(StyleWMS.GRIGIO_TESTO);
         testi.add(nome);
         testi.add(sku);
 
-        JLabel qty = new JLabel(String.valueOf(p.quantita()));
+        JLabel qty = new JLabel(String.valueOf(p.getQtaDisponibile()));
         qty.setFont(new Font("SansSerif", Font.BOLD, 12));
         qty.setForeground(StyleWMS.BLU_ACCIAIO);
         qty.setBackground(StyleWMS.AZZURRO_LIGHT);

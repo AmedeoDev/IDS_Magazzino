@@ -122,4 +122,24 @@ public class ProdottoDAO {
         }
         return null;
     }
+
+    public boolean aggiornaProdottoCompleto(String idProd, String nome, String categoria, String descrizione, int qtDisp, int sogliaMinima, String posizione, String idResponsabile) throws SQLException {
+
+        String query = "UPDATE prodotto SET nome = ?, Categoria = ?, Descrizione = ?, QtaDisp = ?, SogliaMinima = ?, IdPos = ?, IdUtenteResponsabie = ? WHERE IdProd = ?";
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+
+            stmt.setString(1, nome);
+            stmt.setString(2, categoria);
+            stmt.setString(3, descrizione);
+            stmt.setInt(4, qtDisp);
+            stmt.setInt(5, sogliaMinima);
+            stmt.setInt(6, sogliaMinima);
+            stmt.setString(7, posizione);
+            stmt.setString(8, idResponsabile);
+
+            return stmt.executeUpdate() > 0;
+        }
+
+    }
 }
