@@ -1,7 +1,10 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.MovimentoController;
 import it.unina.magazzino.control.ProdottoController;
+import it.unina.magazzino.database.MovimentoDAO;
+import it.unina.magazzino.entity.Movimento;
 import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Prodotto;
 
@@ -11,6 +14,7 @@ import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -262,6 +266,15 @@ public class RegistraCarico extends JFrame {
                 JOptionPane.showMessageDialog(this, "Errore di caricamento");
                 return;
             }
+
+            Movimento movimento = new Movimento(
+                    quantita, new Date(System.currentTimeMillis()),
+                    "Carico",
+                    skuSelezionato, operatoreLogged.getID_Utenete()
+            );
+
+            new MovimentoDAO().inserisciMovimento(movimento);
+
         } catch (Exception ex){
             JOptionPane.showMessageDialog(this, "Errore DB: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
             return;

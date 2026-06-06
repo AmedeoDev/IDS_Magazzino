@@ -2,6 +2,8 @@ package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
 import it.unina.magazzino.control.ProdottoController;
+import it.unina.magazzino.database.MovimentoDAO;
+import it.unina.magazzino.entity.Movimento;
 import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Prodotto;
 
@@ -11,6 +13,7 @@ import javax.swing.event.ListSelectionEvent;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.sql.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -268,13 +271,13 @@ public class RegistraScarico extends JFrame {
         int disponibile        = Integer.parseInt(dati[1]);
         int sogliaMin          = Integer.parseInt(dati[2]);
 
-        // ── MODIFICA 1 ────────────────────────────────────────────────────────────
+
         // Controllo: quantità richiesta > disponibile → blocca l'operazione.
         // L'operatore vede solo che l'operazione è annullata; la notifica al
         // responsabile avviene in background senza mostrare nulla all'operatore.
         // PRIMA: notificaResponsabile(...) mostrava un JOptionPane con parent=this
         //        (visibile all'operatore) e nel testo diceva "il responsabile è stato notificato".
-        // DOPO:  JOptionPane pulito solo per l'operatore + chiamata silenziosa in background.
+        // DOPO: JOptionPane pulito solo per l'operatore + chiamata silenziosa in background.
         if (quantita > disponibile) {
             JOptionPane.showMessageDialog(this,
                     "Lo scarico di " + quantita + " unità di \"" + dati[0] + "\" supera\n" +
@@ -284,10 +287,32 @@ public class RegistraScarico extends JFrame {
             notificaResponsabileInBackground(dati[0], disponibile, -1);
             return;
         }
-        // ── FINE MODIFICA 1 ───────────────────────────────────────────────────────
+
 
         // Aggiorna disponibilità
         int nuovaQty = disponibile - quantita;
+
+        try {
+            ProdottoController controller = new ProdottoController();
+            boolean savingOK = controller.aggiornaQuantitaProdotto(skuSelezionato, nuovaQty);
+
+            if(!savingOK){
+                JOptionPane.showMessageDialog(this, "Errore in fase di aggiornameto scorte");
+                return;
+            }
+
+            Movimento movimentoScarico = new Movimento(
+                    quantita, new Date(System.currentTimeMillis()),
+                    "Scarico", skuSelezionato,
+                    operatoreLoggato.getID_Utenete()
+            );
+
+            new MovimentoDAO().inserisciMovimento(movimentoScarico);
+        } catch (Exception ex){
+            JOptionPane.showMessageDialog(this,"Errore DB: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         dati[1] = String.valueOf(nuovaQty);
 
         // Aggiorna voce nella JList
@@ -300,7 +325,7 @@ public class RegistraScarico extends JFrame {
                         "Nuova disponibilità: " + nuovaQty + " unità.",
                 "Scarico completato", JOptionPane.INFORMATION_MESSAGE);
 
-        // ── MODIFICA 2 ────────────────────────────────────────────────────────────
+
         // Controllo soglia minima: se la disponibilità residua scende sotto soglia,
         // il responsabile viene notificato in background.
         // L'operatore NON vede alcun dialogo: la gestione del riordino non gli compete.
@@ -309,7 +334,7 @@ public class RegistraScarico extends JFrame {
         if (nuovaQty < sogliaMin) {
             notificaResponsabileInBackground(dati[0], nuovaQty, sogliaMin);
         }
-        // ── FINE MODIFICA 2 ───────────────────────────────────────────────────────
+
 
         txtQuantita.setText("");
     }
