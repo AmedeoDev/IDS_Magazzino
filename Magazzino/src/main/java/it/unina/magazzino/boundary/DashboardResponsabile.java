@@ -167,7 +167,6 @@ public class DashboardResponsabile extends JFrame {
 
         JPanel ruoloRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
         ruoloRow.setOpaque(false);
-        ruoloRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         JPanel dot = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -502,14 +501,13 @@ public class DashboardResponsabile extends JFrame {
 
     // ── KPI row
     private JPanel buildKpiRow() {
-        JPanel row = new JPanel(new GridLayout(1, 4, 14, 0));
+        JPanel row = new JPanel(new GridLayout(1, 3, 14, 0));
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 108));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.add(kpiCard("Prodotti Totali",  "142", StyleWMS.BLU_ACCIAIO,      "↑ 12 questa settimana"));
-        row.add(kpiCard("Movimenti Oggi",    "27",  new Color(46, 125, 50),   "↑ 5 rispetto a ieri"));
-        row.add(kpiCard("Sotto Scorta",       "5",  new Color(198, 40, 40),   "⚠ Richiede attenzione"));
-        row.add(kpiCard("Operatori Attivi",   "8",  new Color(123, 31, 162),  "In turno ora"));
+        row.add(kpiCard("Prodotti Totali",  "142", StyleWMS.BLU_ACCIAIO,    "↑ 12 questa settimana"));
+        row.add(kpiCard("Movimenti Oggi",    "27",  new Color(46, 125, 50), "↑ 5 rispetto a ieri"));
+        row.add(kpiCard("Sotto Scorta",       "5",  new Color(198, 40, 40), "⚠ Richiede attenzione"));
         return row;
     }
 
