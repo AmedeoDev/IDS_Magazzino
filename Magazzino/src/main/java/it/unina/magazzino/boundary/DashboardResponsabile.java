@@ -511,8 +511,6 @@ public class DashboardResponsabile extends JFrame {
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 108));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-<<<<<<< HEAD
-
 
         // prelevo i prodotti totali
         String prodottiTotali = "N/D";
@@ -558,13 +556,6 @@ public class DashboardResponsabile extends JFrame {
         row.add(kpiCard("Prodotti totali", prodottiTotali, StyleWMS.BLU_ACCIAIO, subProdotti));
         row.add(kpiCard("Movimenti oggi", movimentiOggi, new Color(46, 125, 50), subMovimenti));
         row.add(kpiCard("Sotto scorta", String.valueOf(prodottiSottoScorta), new Color(198, 40, 40), "⚠ Attenzione"));
-
-
-=======
-        row.add(kpiCard("Prodotti Totali",  "142", StyleWMS.BLU_ACCIAIO,    "↑ 12 questa settimana"));
-        row.add(kpiCard("Movimenti Oggi",    "27",  new Color(46, 125, 50), "↑ 5 rispetto a ieri"));
-        row.add(kpiCard("Sotto Scorta",       "5",  new Color(198, 40, 40), "⚠ Richiede attenzione"));
->>>>>>> a672afbd0474451a699a452130b421fc3390db10
         return row;
     }
 
