@@ -77,4 +77,45 @@ public class MovimentoController {
         }
 
     }
+
+    public List<Movimento> getUltimiMovimenti(int n) {
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getUltimiMovimenti(n);
+        } catch (Exception e) {
+            System.out.println("Errore getUltimiMovimenti: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public List<Movimento> getMovimentiUltimi7Giorni() {
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getMovimenti7Giorni();
+        } catch (Exception e) {
+            System.out.println("Errore getMovimentiUltimi7Giorni: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public List<String> getProdottiPiuMovimentati(int n) {
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getProdottiPiuMovimentati(n);
+        } catch (Exception e) {
+            System.out.println("Errore getProdottiPiuMovimentati: " + e.getMessage());
+            return null;
+        }
+    }
+
+
+    public List<Movimento> getProdottiOggi(){
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getMovimentiOggi();
+        } catch (Exception e){
+            System.out.println("Erroree getMovimentiOggi: " + e.getMessage());
+            return null;
+        }
+    }
 }

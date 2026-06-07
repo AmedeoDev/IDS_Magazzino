@@ -1,6 +1,10 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.MovimentoController;
+import it.unina.magazzino.control.ProdottoController;
+import it.unina.magazzino.entity.Movimento;
+import it.unina.magazzino.entity.Prodotto;
 import it.unina.magazzino.entity.Responsabile;
 import org.kordamp.ikonli.material2.Material2OutlinedAL;
 import org.kordamp.ikonli.material2.Material2OutlinedMZ;
@@ -16,6 +20,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DashboardResponsabile extends JFrame {
 
@@ -506,10 +512,54 @@ public class DashboardResponsabile extends JFrame {
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 108));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.add(kpiCard("Prodotti Totali",  "142", StyleWMS.BLU_ACCIAIO,      "↑ 12 questa settimana"));
-        row.add(kpiCard("Movimenti Oggi",    "27",  new Color(46, 125, 50),   "↑ 5 rispetto a ieri"));
-        row.add(kpiCard("Sotto Scorta",       "5",  new Color(198, 40, 40),   "⚠ Richiede attenzione"));
-        row.add(kpiCard("Operatori Attivi",   "8",  new Color(123, 31, 162),  "In turno ora"));
+
+
+        // prelevo i prodotti totali
+        String prodottiTotali = "N/D";
+        String subProdotti = ""; // questa variabile ci servirà per mostrare i movimenti nel magazzino
+        try {
+            List<Prodotto> prodotti = new ProdottoController().getAllProdotti();
+            if(prodotti != null) prodottiTotali = String.valueOf(prodotti.size());
+        } catch (Exception e) {}
+
+        // prelevo i prodotti sotto scorta
+        int prodottiSottoScorta = 0;
+        try {
+            List<Prodotto> sottoScorta = new ProdottoController().getAllProdotti();
+            if(sottoScorta != null){
+                for(Prodotto p : sottoScorta){
+                    if(p.isSottoScorta()) prodottiSottoScorta++;
+                }
+            }
+        } catch (Exception e) {}
+
+        // prelevo i movimenti odierni
+
+        String movimentiOggi = "N/D";
+        String subMovimenti = "";
+        try {
+            // sviluppiamo getMovimentiOggi per questa funzionalità
+            List<Movimento> oggi = new ProdottoController().getMovimentiOggi();
+            List<Movimento> ieri = new ProdottoController().getMovimentiIeri();
+            if(oggi != null) {
+                movimentiOggi = String.valueOf(oggi.size());
+                if(ieri != null){
+                    int diff = oggi.size() - ieri.size();
+                    if(diff > 0) subMovimenti = "↑ " + diff + " rispetto ieri";
+                    else if(diff > 0) subMovimenti = "↓ " + diff + "rispetti ieri";
+                    else subMovimenti = "movimenti invariati da ieri";
+                }
+            }
+        } catch (Exception e) {}
+
+        notificheCount = prodottiSottoScorta;
+        sidebarPanel.repaint();
+
+        row.add(kpiCard("Prodotti totali", prodottiTotali, StyleWMS.BLU_ACCIAIO, subProdotti));
+        row.add(kpiCard("Movimenti oggi", movimentiOggi, new Color(46, 125, 50), subMovimenti));
+        row.add(kpiCard("Sotto scorta", String.valueOf(prodottiSottoScorta), new Color(198, 40, 40), "⚠ Attenzione"));
+
+
         return row;
     }
 
@@ -570,13 +620,29 @@ public class DashboardResponsabile extends JFrame {
         panel.setBorder(new EmptyBorder(18, 18, 18, 18));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         String[] col = {"ID Prodotto", "Tipo", "Quantità", "Data", "Operatore"};
-        Object[][] dati = {
-                {"123456", "Carico",  "+50",  "01/06/2026", "m.verdi@wms.it"},
-                {"789012", "Scarico", "-20",  "01/06/2026", "a.bianchi@wms.it"},
-                {"345678", "Carico",  "+30",  "31/05/2026", "m.verdi@wms.it"},
-                {"901234", "Scarico", "-5",   "31/05/2026", "l.neri@wms.it"},
-                {"567890", "Carico",  "+100", "30/05/2026", "a.bianchi@wms.it"},
-        };
+        Object[][] dati = {};
+
+        try {
+            List<Movimento> recenti = new MovimentoController().getUltimiMovimenti(5);
+            if(recenti != null && !recenti.isEmpty()){
+                dati = new Object[recenti.size()][5];
+                for(int i = 0; i < recenti.size(); ++i){
+                    Movimento m = recenti.get(i);
+                    String segno = "Carico".equals(m.getTipoMovimento()) ? "+" : "-";
+                    dati[i][0] = m.getIdProdotto();
+                    dati[i][1] = m.getTipoMovimento();
+                    dati[i][2] = segno + m.getQtaProdotto();
+                    dati[i][3] = m.getData().toString();
+                    dati[i][4] = m.getIdOperatore();
+                }
+            } else {
+                dati = new Object[][]{{"Nessun movimento", "-", "-", "-", "-"}};
+            }
+        } catch (Exception e){
+            dati = new Object[][]{{"Errore caricamento", "-", "-", "-", "-"}};
+        }
+
+
         panel.add(buildTable(col, dati), BorderLayout.CENTER);
         return panel;
     }
@@ -587,13 +653,30 @@ public class DashboardResponsabile extends JFrame {
         panel.setBorder(new EmptyBorder(18, 18, 18, 18));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         String[] col = {"ID", "Nome Prodotto", "Disponibile", "Soglia Minima"};
-        Object[][] dati = {
-                {"000011", "Guanti latex",      "3", "10"},
-                {"000045", "Nastro da imballo", "1", "5"},
-                {"000078", "Scatole S",          "4", "20"},
-                {"000102", "Etichette",          "8", "15"},
-                {"000134", "Pallets",            "2", "6"},
-        };
+        Object[][] dati = {};
+
+        try {
+            List<Prodotto> tuttiProdotti = new ProdottoController().getAllProdotti();
+            List<Object[]> righe = new ArrayList<>();
+            if(tuttiProdotti != null){
+                for(Prodotto p : tuttiProdotti){
+                    if(p.isSottoScorta()){
+                        righe.add(new Object[]{
+                                p.getID(),
+                                p.getNome(),
+                                String.valueOf(p.getQtaDisponibile()),
+                                String.valueOf(p.getSogliaMinima())
+                        });
+                    }
+                }
+            }
+            dati = righe.isEmpty() ? new Object[][]{{"Nessun prodotto sotto scorta", "-", "-", "-", "-"}}
+            : righe.toArray(new Object[0][]);
+        } catch (Exception e){
+            dati = new Object[][]{{"Errore caricamento dati", "-", "-", "-", "-"}};
+        }
+
+
         panel.add(buildTable(col, dati), BorderLayout.CENTER);
         return panel;
     }

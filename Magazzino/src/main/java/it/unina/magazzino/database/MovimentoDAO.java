@@ -65,4 +65,104 @@ public class MovimentoDAO {
 
         }
     }
+
+    public List<Movimento> getMovimentiOggi() throws SQLException {
+
+        List<Movimento> lista = new ArrayList<>();
+        String query = "SELECT m.* FROM movimento m " +
+                "JOIN prodotto p ON m.IdProd = p.IdProd " +
+                "WHERE DATE(m.Data) = CURDATE() ORDER BY m.Data DESC";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query);
+        ResultSet rs = stmt.executeQuery()){
+
+            while(rs.next()){
+                lista.add(new Movimento(rs.getInt("IdMovimento"), rs.getInt("QtaProd"),
+                        rs.getDate("Data"), rs.getString("TipoMovimento"), rs.getString("IdProd"),
+                        rs.getString("IdUtenteOperatore"), rs.getString("Nome")));
+            }
+        }
+        return lista;
+    }
+
+    public List<Movimento> getUltimiMovimenti(int n) throws SQLException {
+        List<Movimento> lista = new ArrayList<>();
+        String query = "SELECT m.*, p.Nome FROM movimento m " +
+                "JOIN prodotto p ON m.IdProd = p.IdProd " +
+                "ORDER BY m.Data DESC LIMIT ?";
+        try (Connection conn = DBConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, n);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(new Movimento(rs.getInt("IdMovimento"), rs.getInt("QtaProd"),
+                            rs.getDate("Data"), rs.getString("TipoMovimento"),
+                            rs.getString("IdProd"), rs.getString("IdUtenteOperatore"),
+                            rs.getString("Nome")));
+                }
+            }
+        }
+        return lista;
+    }
+
+    public List<Movimento> getMovimenti7Giorni() throws SQLException {
+
+        List<Movimento> lista = new ArrayList<>();
+        String query = "SELECT m.* FROM movimento m " +
+                "JOIN prodotto p ON m.IdProd = p.IdProd " +
+                "WHERE DATE(m.Data) = CURDATE() ORDER BY m.Data DESC";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()){
+
+            while(rs.next()){
+                lista.add(new Movimento(rs.getInt("IdMovimento"), rs.getInt("QtaProd"),
+                        rs.getDate("Data"), rs.getString("TipoMovimento"), rs.getString("IdProd"),
+                        rs.getString("IdUtenteOperatore"), rs.getString("Nome")));
+            }
+        }
+        return lista;
+    }
+
+    public List<String> getProdottiPiuMovimentati(int n) throws SQLException {
+        List<String> lista = new ArrayList<>();
+        String query = "SELECT p.Nome, COUNT(*) as freq FROM movimento m " +
+                "JOIN prodotto p ON m.IdProd = p.IdProd " +
+                "GROUP BY m.IdProd, p.Nome ORDER BY freq DESC LIMIT ?";
+        try (Connection conn = DBConnectionManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, n);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) lista.add(rs.getString("Nome"));
+            }
+        }
+        return lista;
+    }
+
+
+    public List<Movimento> getMovimentoIeri() throws SQLException{
+
+        List<Movimento> listaMovimenti = new ArrayList<>();
+        String query = "SELECT m.* FROM movimento m " +
+                "JOIN prodotto p on m.IdProd = p.IdProd " +
+                "WHERE DATE(m.Data) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) " +
+                "ORDER BY m.Data DESC";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query);
+        ResultSet rs = stmt.executeQuery()){
+
+            while(rs.next()){
+                listaMovimenti.add(new Movimento(
+                        rs.getInt("IdMovimento"), rs.getInt("QtaProd"),
+                        rs.getDate("Data"), rs.getString("TipoMovimento"),
+                        rs.getString("IdProd"),rs.getString("IdUtenteOperatore"),
+                        rs.getString("Nomee")
+                ));
+            }
+        }
+        return listaMovimenti;
+    }
 }

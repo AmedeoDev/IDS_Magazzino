@@ -1,6 +1,8 @@
 package it.unina.magazzino.control;
 
+import it.unina.magazzino.database.MovimentoDAO;
 import it.unina.magazzino.database.ProdottoDAO;
+import it.unina.magazzino.entity.Movimento;
 import it.unina.magazzino.entity.Prodotto;
 
 import java.sql.SQLException;
@@ -80,5 +82,27 @@ public class ProdottoController {
             return false;
         }
 
+    }
+
+    public List<Movimento> getMovimentiOggi() {
+
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getMovimentiOggi();
+        } catch (Exception e){
+            System.out.println("Errore getMovimentiOggi: " + e.getMessage());
+            return null;
+        }
+
+    }
+
+    public List<Movimento> getMovimentiIeri() {
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getMovimentoIeri();
+        } catch (Exception e){
+            System.out.println("Errore getMovimentoIeri: " + e.getMessage());
+            return null;
+        }
     }
 }

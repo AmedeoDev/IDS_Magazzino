@@ -41,7 +41,7 @@ public class GestisciProdotti extends JPanel {
     private static final String SOGLIA_ASSENTE = "—";
 
     private static final String[] COLONNE = {
-            "ID", "Nome Prodotto", "Categoria", "Quantità", "Soglia Min.", "Posizione"
+            "ID", "Nome Prodotto", "Categoria", "Quantità", "Posizione", "Soglia Min."
     };
 
     public void caricaDatiDalDatabase(){
