@@ -520,40 +520,38 @@ public class DashboardResponsabile extends JFrame {
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 108));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // prelevo i prodotti totali
+        // Prodotti totali
         String prodottiTotali = "N/D";
-        String subProdotti = ""; // questa variabile ci servirà per mostrare i movimenti nel magazzino
+        String subProdotti = "";
         try {
             List<Prodotto> prodotti = new ProdottoController().getAllProdotti();
-            if(prodotti != null) prodottiTotali = String.valueOf(prodotti.size());
+            if (prodotti != null) prodottiTotali = String.valueOf(prodotti.size());
         } catch (Exception e) {}
 
-        // prelevo i prodotti sotto scorta
+        // Prodotti sotto scorta
         int prodottiSottoScorta = 0;
         try {
             List<Prodotto> sottoScorta = new ProdottoController().getAllProdotti();
-            if(sottoScorta != null){
-                for(Prodotto p : sottoScorta){
-                    if(p.isSottoScorta()) prodottiSottoScorta++;
+            if (sottoScorta != null) {
+                for (Prodotto p : sottoScorta) {
+                    if (p.isSottoScorta()) prodottiSottoScorta++;
                 }
             }
         } catch (Exception e) {}
 
-        // prelevo i movimenti odierni
-
+        // Movimenti odierni
         String movimentiOggi = "N/D";
         String subMovimenti = "";
         try {
-            // sviluppiamo getMovimentiOggi per questa funzionalità
             List<Movimento> oggi = new ProdottoController().getMovimentiOggi();
             List<Movimento> ieri = new ProdottoController().getMovimentiIeri();
-            if(oggi != null) {
+            if (oggi != null) {
                 movimentiOggi = String.valueOf(oggi.size());
-                if(ieri != null){
+                if (ieri != null) {
                     int diff = oggi.size() - ieri.size();
-                    if(diff > 0) subMovimenti = "↑ " + diff + " rispetto ieri";
-                    else if(diff > 0) subMovimenti = "↓ " + diff + "rispetti ieri";
-                    else subMovimenti = "movimenti invariati da ieri";
+                    if (diff > 0)      subMovimenti = "↑ " + diff + " rispetto a ieri";
+                    else if (diff < 0) subMovimenti = "↓ " + Math.abs(diff) + " rispetto a ieri";
+                    else               subMovimenti = "Movimenti invariati da ieri";
                 }
             }
         } catch (Exception e) {}
@@ -561,10 +559,9 @@ public class DashboardResponsabile extends JFrame {
         notificheCount = prodottiSottoScorta;
         sidebarPanel.repaint();
 
-        row.add(kpiCard("Prodotti totali", prodottiTotali, StyleWMS.BLU_ACCIAIO, subProdotti));
-        row.add(kpiCard("Movimenti oggi", movimentiOggi, new Color(46, 125, 50), subMovimenti));
-        row.add(kpiCard("Sotto scorta", String.valueOf(prodottiSottoScorta), new Color(198, 40, 40), "⚠ Attenzione"));
-
+        row.add(kpiCard("Prodotti totali",  prodottiTotali,                 StyleWMS.BLU_ACCIAIO,      subProdotti));
+        row.add(kpiCard("Movimenti oggi",   movimentiOggi,                  new Color(46, 125, 50),    subMovimenti));
+        row.add(kpiCard("Sotto scorta",     String.valueOf(prodottiSottoScorta), new Color(198, 40, 40), "⚠ Attenzione"));
         return row;
     }
 
@@ -628,9 +625,9 @@ public class DashboardResponsabile extends JFrame {
 
         try {
             List<Movimento> recenti = new MovimentoController().getUltimiMovimenti(5);
-            if(recenti != null && !recenti.isEmpty()){
+            if (recenti != null && !recenti.isEmpty()) {
                 dati = new Object[recenti.size()][5];
-                for(int i = 0; i < recenti.size(); ++i){
+                for (int i = 0; i < recenti.size(); ++i) {
                     Movimento m = recenti.get(i);
                     String segno = "Carico".equals(m.getTipoMovimento()) ? "+" : "-";
                     dati[i][0] = m.getIdProdotto();
@@ -642,10 +639,9 @@ public class DashboardResponsabile extends JFrame {
             } else {
                 dati = new Object[][]{{"Nessun movimento", "-", "-", "-", "-"}};
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             dati = new Object[][]{{"Errore caricamento", "-", "-", "-", "-"}};
         }
-
 
         panel.add(buildTable(col, dati), BorderLayout.CENTER);
         return panel;
@@ -662,9 +658,9 @@ public class DashboardResponsabile extends JFrame {
         try {
             List<Prodotto> tuttiProdotti = new ProdottoController().getAllProdotti();
             List<Object[]> righe = new ArrayList<>();
-            if(tuttiProdotti != null){
-                for(Prodotto p : tuttiProdotti){
-                    if(p.isSottoScorta()){
+            if (tuttiProdotti != null) {
+                for (Prodotto p : tuttiProdotti) {
+                    if (p.isSottoScorta()) {
                         righe.add(new Object[]{
                                 p.getID(),
                                 p.getNome(),
@@ -674,12 +670,12 @@ public class DashboardResponsabile extends JFrame {
                     }
                 }
             }
-            dati = righe.isEmpty() ? new Object[][]{{"Nessun prodotto sotto scorta", "-", "-", "-", "-"}}
-            : righe.toArray(new Object[0][]);
-        } catch (Exception e){
-            dati = new Object[][]{{"Errore caricamento dati", "-", "-", "-", "-"}};
+            dati = righe.isEmpty()
+                    ? new Object[][]{{"Nessun prodotto sotto scorta", "-", "-", "-"}}
+                    : righe.toArray(new Object[0][]);
+        } catch (Exception e) {
+            dati = new Object[][]{{"Errore caricamento dati", "-", "-", "-"}};
         }
-
 
         panel.add(buildTable(col, dati), BorderLayout.CENTER);
         return panel;
@@ -691,7 +687,7 @@ public class DashboardResponsabile extends JFrame {
         panel.setBorder(new EmptyBorder(22, 22, 22, 22));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
-        panel.add(statBox("Operazioni totali (7gg)",  "89",             StyleWMS.BLU_ACCIAIO));
+        panel.add(statBox("Operazioni totali (7gg)",  "89",              StyleWMS.BLU_ACCIAIO));
         panel.add(statBox("Prodotti più movimentati", "Guanti, Scatole", StyleWMS.BLU_MEDIO));
         panel.add(statBox("Sotto scorta attualmente", "5",               new Color(198, 40, 40)));
         return panel;
