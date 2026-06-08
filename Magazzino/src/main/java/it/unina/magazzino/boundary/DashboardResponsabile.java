@@ -25,28 +25,27 @@ import java.util.List;
 
 public class DashboardResponsabile extends JFrame {
 
-    // Colori locali derivati (trasparenze su palette StyleWMS)
-    private static final Color GLASS_BORDER   = new Color(
+    private static final Color GLASS_BORDER = new Color(
             StyleWMS.BLU_ACCIAIO.getRed(),
             StyleWMS.BLU_ACCIAIO.getGreen(),
             StyleWMS.BLU_ACCIAIO.getBlue(), 60);
-    private static final Color HOVER_BG       = new Color(
+    private static final Color HOVER_BG = new Color(
             StyleWMS.AZZURRO_LIGHT.getRed(),
             StyleWMS.AZZURRO_LIGHT.getGreen(),
             StyleWMS.AZZURRO_LIGHT.getBlue(), 40);
-    private static final Color ACTIVE_BG      = new Color(
+    private static final Color ACTIVE_BG = new Color(
             StyleWMS.AZZURRO_LIGHT.getRed(),
             StyleWMS.AZZURRO_LIGHT.getGreen(),
             StyleWMS.AZZURRO_LIGHT.getBlue(), 25);
-    private static final Color ROW_ODD        = new Color(0xF7, 0xFA, 0xFF);
-    private static final Color ROW_EVEN       = StyleWMS.BIANCO;
-    private static final Color SEL_BG         = new Color(
+    private static final Color ROW_ODD    = new Color(0xF7, 0xFA, 0xFF);
+    private static final Color ROW_EVEN   = StyleWMS.BIANCO;
+    private static final Color SEL_BG     = new Color(
             StyleWMS.AZZURRO_LIGHT.getRed(),
             StyleWMS.AZZURRO_LIGHT.getGreen(),
             StyleWMS.AZZURRO_LIGHT.getBlue(), 120);
-    private static final Color GRID_COLOR     = new Color(0xE8, 0xEF, 0xF8);
-    private static final Color CARD_BORDER    = new Color(0xD6, 0xE4, 0xF0);
-    private static final Color ALERT_BORDER   = new Color(198, 40, 40, 80);
+    private static final Color GRID_COLOR   = new Color(0xE8, 0xEF, 0xF8);
+    private static final Color CARD_BORDER  = new Color(0xD6, 0xE4, 0xF0);
+    private static final Color ALERT_BORDER = new Color(198, 40, 40, 80);
 
     private static final Font FONT_MONO  = new Font("Monospaced", Font.BOLD, 11);
     private static final Font FONT_LABEL = new Font("SansSerif", Font.PLAIN, 11);
@@ -66,7 +65,6 @@ public class DashboardResponsabile extends JFrame {
             "Andamento Magazzino"
     };
 
-    // ── Costruttore ──────────────────────────────────────────────
     public DashboardResponsabile(Responsabile responsabile, String logoPath) {
         this.responsabileLoggato = responsabile;
         String nomeUtente = responsabile.getNome() + " " + responsabile.getCognome();
@@ -83,7 +81,6 @@ public class DashboardResponsabile extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setColor(StyleWMS.GRIGIO_NEUTRO);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                // Dot-grid texture sottile
                 g2.setColor(new Color(
                         StyleWMS.BLU_ACCIAIO.getRed(),
                         StyleWMS.BLU_ACCIAIO.getGreen(),
@@ -113,7 +110,6 @@ public class DashboardResponsabile extends JFrame {
         root.add(wrapper, BorderLayout.CENTER);
     }
 
-    // ══ NOTIFICHE ════════════════════════════════════════════════
     public void decrementaNotifica() {
         notificheCount = Math.max(0, notificheCount - 1);
         sidebarPanel.repaint();
@@ -131,13 +127,11 @@ public class DashboardResponsabile extends JFrame {
         JPanel bar = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
-                // Gradiente orizzontale sul BLU_ACCIAIO
                 GradientPaint gp = new GradientPaint(
                         0, 0, StyleWMS.BLU_ACCIAIO,
                         getWidth(), 0, StyleWMS.BLU_MEDIO);
                 g2.setPaint(gp);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                // Linea inferiore accent
                 g2.setColor(StyleWMS.AZZURRO_LIGHT);
                 g2.fillRect(0, getHeight() - 2, getWidth(), 2);
                 g2.dispose();
@@ -146,15 +140,19 @@ public class DashboardResponsabile extends JFrame {
         bar.setOpaque(false);
         bar.setBorder(new EmptyBorder(13, 8, 13, 22));
 
-        // — LEFT
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        // — LEFT: BoxLayout X_AXIS per controllo preciso degli spazi
+        JPanel left = new JPanel();
         left.setOpaque(false);
+        left.setLayout(new BoxLayout(left, BoxLayout.X_AXIS));
 
         left.add(buildAvatar(nomeUtente));
+        left.add(Box.createHorizontalStrut(12));
 
         // Separatore verticale
         JPanel divider = new JPanel() {
-            @Override public Dimension getPreferredSize() { return new Dimension(1, 36); }
+            @Override public Dimension getPreferredSize()  { return new Dimension(1, 36); }
+            @Override public Dimension getMaximumSize()    { return new Dimension(1, 36); }
+            @Override public Dimension getMinimumSize()    { return new Dimension(1, 36); }
             @Override protected void paintComponent(Graphics g) {
                 g.setColor(new Color(255, 255, 255, 50));
                 g.fillRect(0, 0, 1, getHeight());
@@ -162,17 +160,25 @@ public class DashboardResponsabile extends JFrame {
         };
         divider.setOpaque(false);
         left.add(divider);
+        left.add(Box.createHorizontalStrut(12));
 
+        // Testi: BoxLayout Y_AXIS con allineamento LEFT esplicito
         JPanel testi = new JPanel();
         testi.setOpaque(false);
         testi.setLayout(new BoxLayout(testi, BoxLayout.Y_AXIS));
+        testi.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         JLabel nome = new JLabel("Benvenuto, " + nomeUtente);
         nome.setFont(new Font("SansSerif", Font.BOLD, 13));
         nome.setForeground(StyleWMS.BIANCO);
+        nome.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel ruoloRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        // ruoloRow con BoxLayout X_AXIS per evitare padding implicito di FlowLayout
+        JPanel ruoloRow = new JPanel();
         ruoloRow.setOpaque(false);
+        ruoloRow.setLayout(new BoxLayout(ruoloRow, BoxLayout.X_AXIS));
+        ruoloRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         JPanel dot = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -182,16 +188,23 @@ public class DashboardResponsabile extends JFrame {
                 g2.dispose();
             }
             @Override public Dimension getPreferredSize() { return new Dimension(6, 12); }
+            @Override public Dimension getMaximumSize()   { return new Dimension(6, 12); }
+            @Override public Dimension getMinimumSize()   { return new Dimension(6, 12); }
         };
         dot.setOpaque(false);
+
         JLabel ruolo = new JLabel("Responsabile di magazzino");
         ruolo.setFont(FONT_LABEL);
         ruolo.setForeground(new Color(0xD6, 0xE4, 0xF0));
+        ruolo.setBorder(new EmptyBorder(0, 5, 0, 0));
+
         ruoloRow.add(dot);
         ruoloRow.add(ruolo);
 
         testi.add(nome);
+        testi.add(Box.createVerticalStrut(3));
         testi.add(ruoloRow);
+
         left.add(testi);
 
         // — RIGHT
@@ -249,18 +262,18 @@ public class DashboardResponsabile extends JFrame {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Anello esterno
                 g2.setColor(new Color(
                         StyleWMS.AZZURRO_LIGHT.getRed(),
                         StyleWMS.AZZURRO_LIGHT.getGreen(),
                         StyleWMS.AZZURRO_LIGHT.getBlue(), 80));
                 g2.fillOval(0, 0, getWidth(), getHeight());
-                // Interno
                 g2.setColor(StyleWMS.AZZURRO_LIGHT);
                 g2.fillOval(3, 3, getWidth()-6, getHeight()-6);
                 g2.dispose();
             }
             @Override public Dimension getPreferredSize() { return new Dimension(40, 40); }
+            @Override public Dimension getMaximumSize()   { return new Dimension(40, 40); }
+            @Override public Dimension getMinimumSize()   { return new Dimension(40, 40); }
         };
         avatar.setOpaque(false);
         avatar.setLayout(new GridBagLayout());
@@ -278,7 +291,6 @@ public class DashboardResponsabile extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setColor(new Color(20, 90, 170));
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                // Bordo destro sfumato
                 GradientPaint gp = new GradientPaint(
                         getWidth()-2, 0, new Color(255,255,255,0),
                         getWidth()-2, getHeight()/2, new Color(255,255,255,40));
@@ -367,7 +379,6 @@ public class DashboardResponsabile extends JFrame {
                 if (attivo) {
                     g2.setColor(new Color(255, 255, 255, 25));
                     g2.fill(new RoundRectangle2D.Float(8, 2, getWidth()-16, getHeight()-4, 10, 10));
-                    // Indicatore sinistro
                     g2.setColor(StyleWMS.AZZURRO_LIGHT);
                     g2.fillRoundRect(8, 6, 3, getHeight()-12, 3, 3);
                 } else if (hovered) {
@@ -375,7 +386,6 @@ public class DashboardResponsabile extends JFrame {
                     g2.fill(new RoundRectangle2D.Float(8, 2, getWidth()-16, getHeight()-4, 10, 10));
                 }
 
-                // Badge notifica
                 if (hasBadge && notificheCount > 0) {
                     String etichetta = String.valueOf(notificheCount);
                     Font badgeFont = new Font("SansSerif", Font.BOLD, 9);
@@ -434,7 +444,6 @@ public class DashboardResponsabile extends JFrame {
         return row;
     }
 
-    // ── Navigazione
     private void navigaA(String sezione) {
         JComponent pannello = switch (sezione) {
             case "Gestisci Prodotti"     -> new GestisciProdotti(responsabileLoggato.getID_Utenete());
@@ -505,12 +514,12 @@ public class DashboardResponsabile extends JFrame {
         return p;
     }
 
-    // ── KPI row
     private JPanel buildKpiRow() {
         JPanel row = new JPanel(new GridLayout(1, 3, 14, 0));
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 108));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
+<<<<<<< HEAD
 
         // prelevo i prodotti totali
         String prodottiTotali = "N/D";
@@ -556,6 +565,11 @@ public class DashboardResponsabile extends JFrame {
         row.add(kpiCard("Prodotti totali", prodottiTotali, StyleWMS.BLU_ACCIAIO, subProdotti));
         row.add(kpiCard("Movimenti oggi", movimentiOggi, new Color(46, 125, 50), subMovimenti));
         row.add(kpiCard("Sotto scorta", String.valueOf(prodottiSottoScorta), new Color(198, 40, 40), "⚠ Attenzione"));
+=======
+        row.add(kpiCard("Prodotti Totali", "142", StyleWMS.BLU_ACCIAIO,    "↑ 12 questa settimana"));
+        row.add(kpiCard("Movimenti Oggi",   "27",  new Color(46, 125, 50), "↑ 5 rispetto a ieri"));
+        row.add(kpiCard("Sotto Scorta",      "5",  new Color(198, 40, 40), "⚠ Richiede attenzione"));
+>>>>>>> 4d69d7c (Fix interfaccia responsabile)
         return row;
     }
 
@@ -576,7 +590,6 @@ public class DashboardResponsabile extends JFrame {
                 g2.setColor(CARD_BORDER);
                 g2.setStroke(new BasicStroke(1f));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth()-1, getHeight()-1, 14, 14));
-                // Striscia superiore colorata
                 GradientPaint gp = new GradientPaint(0, 0,
                         new Color(colore.getRed(), colore.getGreen(), colore.getBlue(), 220),
                         getWidth(), 0,
@@ -683,9 +696,9 @@ public class DashboardResponsabile extends JFrame {
         panel.setBorder(new EmptyBorder(22, 22, 22, 22));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
-        panel.add(statBox("Operazioni totali (7gg)",  "89",                    StyleWMS.BLU_ACCIAIO));
-        panel.add(statBox("Prodotti più movimentati", "Guanti, Scatole",       StyleWMS.BLU_MEDIO));
-        panel.add(statBox("Sotto scorta attualmente", "5",                     new Color(198, 40, 40)));
+        panel.add(statBox("Operazioni totali (7gg)",  "89",             StyleWMS.BLU_ACCIAIO));
+        panel.add(statBox("Prodotti più movimentati", "Guanti, Scatole", StyleWMS.BLU_MEDIO));
+        panel.add(statBox("Sotto scorta attualmente", "5",               new Color(198, 40, 40)));
         return panel;
     }
 
@@ -694,7 +707,6 @@ public class DashboardResponsabile extends JFrame {
         p.setOpaque(false);
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
-        // Accent line
         JPanel accent = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -707,7 +719,7 @@ public class DashboardResponsabile extends JFrame {
                 g2.dispose();
             }
             @Override public Dimension getPreferredSize() { return new Dimension(50, 3); }
-            @Override public Dimension getMaximumSize() { return new Dimension(50, 3); }
+            @Override public Dimension getMaximumSize()   { return new Dimension(50, 3); }
         };
         accent.setOpaque(false);
 
@@ -758,7 +770,6 @@ public class DashboardResponsabile extends JFrame {
         return footer;
     }
 
-    // ── Tabella
     private JScrollPane buildTable(String[] colonne, Object[][] dati) {
         DefaultTableModel model = new DefaultTableModel(dati, colonne) {
             public boolean isCellEditable(int r, int c) { return false; }
@@ -799,7 +810,6 @@ public class DashboardResponsabile extends JFrame {
         return sp;
     }
 
-    // ── Card builder generico con bordo colorato
     private JPanel buildCard(Color bg, Color border) {
         return new JPanel() {
             @Override protected void paintComponent(Graphics g) {
@@ -815,7 +825,6 @@ public class DashboardResponsabile extends JFrame {
         };
     }
 
-    // ── Section label con chip ref
     private JPanel buildSectionLabel(String testo, String ref) {
         JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         p.setOpaque(false);
@@ -892,7 +901,6 @@ public class DashboardResponsabile extends JFrame {
         return card;
     }
 
-    // ── Helpers
     private String buildInitials(String nome) {
         String[] parti = nome.trim().split("\\s+");
         if (parti.length == 1)
@@ -900,7 +908,6 @@ public class DashboardResponsabile extends JFrame {
         return ("" + parti[0].charAt(0) + parti[parti.length - 1].charAt(0)).toUpperCase();
     }
 
-    // ── main
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
