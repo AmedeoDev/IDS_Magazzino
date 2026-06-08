@@ -125,7 +125,7 @@ public class ProdottoDAO {
 
     public boolean aggiornaProdottoCompleto(String idProd, String nome, String categoria, String descrizione, int qtDisp, int sogliaMinima, String posizione, String idResponsabile) throws SQLException {
 
-        String query = "UPDATE prodotto SET nome = ?, Categoria = ?, Descrizione = ?, QtaDisp = ?, SogliaMinima = ?, IdPos = ?, IdUtenteResponsabie = ? WHERE IdProd = ?";
+        String query = "UPDATE prodotto SET Nome = ?, Categoria = ?, Descrizione = ?, QtaDisp = ?, SogliaMinima = ?, IdPos = ?, IdUtenteResponsabile = ? WHERE IdProd = ?";
         try (Connection conn = DBConnectionManager.getConnection();
         PreparedStatement stmt = conn.prepareStatement(query)){
 
@@ -134,9 +134,13 @@ public class ProdottoDAO {
             stmt.setString(3, descrizione);
             stmt.setInt(4, qtDisp);
             stmt.setInt(5, sogliaMinima);
-            stmt.setInt(6, sogliaMinima);
-            stmt.setString(7, posizione);
-            stmt.setString(8, idResponsabile);
+            stmt.setString(6, posizione);
+            stmt.setString(7, idResponsabile);
+            stmt.setString(8, idProd);
+
+            // [DEBUG] stampa la query con i parametri effettivi
+            System.out.println("[DEBUG DAO] Esecuzione UPDATE per IdProd: " + idProd);
+            System.out.println("[DEBUG DAO] righe aggiornate: " + stmt.executeUpdate());
 
             return stmt.executeUpdate() > 0;
         }

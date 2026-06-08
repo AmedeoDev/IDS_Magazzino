@@ -2,6 +2,13 @@ package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
 import it.unina.magazzino.boundary.utils.ExcelExporter;
+import it.unina.magazzino.control.MovimentoController;
+import it.unina.magazzino.control.ProdottoController;
+import it.unina.magazzino.entity.Movimento;
+import it.unina.magazzino.entity.Prodotto;
+
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -31,15 +38,6 @@ public class ProdottiSottoScorta extends JPanel {
 
     private static final String[] COLONNE = {
             "ID", "Nome Prodotto", "Categoria", "Disponibile", "Soglia Min.", "Scarto", "Livello", "Azione"
-    };
-
-    // Demo: solo prodotti in stato critico (qty < soglia)
-    private Object[][] datiDemo = {
-            {"000011","Guanti latex",        "Sicurezza",   "3",  "10", "-7",  "Critico",  "Riordina"},
-            {"000045","Nastro da imballo",   "Imballaggio", "1",  "5",  "-4",  "Critico",  "Riordina"},
-            {"000078","Scatole S",            "Imballaggio", "4",  "20", "-16", "Critico",  "Riordina"},
-            {"000102","Etichette adesive",   "Cancelleria", "8",  "15", "-7",  "Basso",    "Riordina"},
-            {"000134","Pallets 80x120",       "Logistica",   "2",  "6",  "-4",  "Critico",  "Riordina"},
     };
 
     // ── Costruttore invariato: nessun parametro aggiuntivo ────────
@@ -80,17 +78,46 @@ public class ProdottiSottoScorta extends JPanel {
         wrap.add(Box.createVerticalStrut(10));
 
         // KPI
+
+        List<Prodotto> sottoScorta = caricaProdottiSottoScorta();
+
+        int totale = sottoScorta.size();
+
+        double scartoMedio = 0;
+        if(totale > 0){
+            int sommaScarto = 0;
+            for(Prodotto p : sottoScorta){
+                sommaScarto += (p.getQtaDisponibile() - p.getSogliaMinima());
+                scartoMedio = (double) sommaScarto / totale;
+            }
+        }
+
+        Prodotto pCritico = null;
+        int worstScarto = 0;
+        for(Prodotto p : sottoScorta){
+            int scarto = p.getQtaDisponibile() - p.getSogliaMinima();
+            if(pCritico == null || scarto < worstScarto){
+                pCritico = p;
+                worstScarto = scarto;
+            }
+        }
+
+        String labelCritico = pCritico != null ? pCritico.getNome() + "( " + worstScarto + " )" : "Nessuno";
+
+
         JPanel kpiRow = new JPanel(new GridLayout(1, 3, 12, 0));
         kpiRow.setOpaque(false);
         kpiRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         kpiRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
-        kpiRow.add(buildKpiCard("Prodotti sotto scorta", "5",  new Color(198,40,40)));
-        kpiRow.add(buildKpiCard("Scarto medio",          "-7.6", new Color(180,60,10)));
-        kpiRow.add(buildKpiCard("Prodotto più critico",  "Scatole S (−16)", StyleWMS.BLU_MEDIO));
+        kpiRow.add(buildKpiCard("Prodotti sotto scorta", String.valueOf(totale),  new Color(198,40,40)));
+        kpiRow.add(buildKpiCard("Scarto medio",          String.format("%.1f", scartoMedio), new Color(180,60,10)));
+        kpiRow.add(buildKpiCard("Prodotto più critico",  labelCritico, StyleWMS.BLU_MEDIO));
 
         wrap.add(kpiRow);
         wrap.add(Box.createVerticalStrut(10));
+
+        long numCritici = sottoScorta.stream().filter(p -> (p.getQtaDisponibile() - p.getSogliaMinima()) <= -5).count();
 
         // Banner avviso
         JPanel banner = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
@@ -102,8 +129,7 @@ public class ProdottiSottoScorta extends JPanel {
         JLabel iconaAvviso = new JLabel("⚠");
         iconaAvviso.setFont(new Font("SansSerif", Font.PLAIN, 14));
         iconaAvviso.setForeground(new Color(180, 100, 0));
-        JLabel testoAvviso = new JLabel(
-                "Attenzione: 3 prodotti sono al di sotto del livello critico. Considera un riordino urgente.");
+        JLabel testoAvviso = new JLabel(numCritici > 0 ? "Attenzione: " + numCritici + " prodotti" + (numCritici == 1 ? " o è" : "i sono") : "Tutti i prodotti sono sotto soglia minima ma non in stato critico!");
         testoAvviso.setFont(new Font("SansSerif", Font.PLAIN, 12));
         testoAvviso.setForeground(new Color(130, 70, 0));
         banner.add(iconaAvviso);
@@ -113,6 +139,21 @@ public class ProdottiSottoScorta extends JPanel {
         wrap.add(banner);
         wrap.add(Box.createVerticalStrut(4));
         return wrap;
+    }
+
+    private List<Prodotto> caricaProdottiSottoScorta(){
+        try {
+            List<Prodotto> prodotti = new ProdottoController().getAllProdotti();
+            if(prodotti == null) return new ArrayList<>();
+            List<Prodotto> risultato = new ArrayList<>();
+            for(Prodotto p : prodotti){
+                if(p.isSottoScorta()) risultato.add(p);
+            }
+            return risultato;
+        } catch (Exception e){
+            System.out.println("[ SottoScorta ] errore caricaProdottiSottoScorta: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     private JPanel buildKpiCard(String label, String valore, Color colore) {
@@ -142,9 +183,29 @@ public class ProdottiSottoScorta extends JPanel {
         panel.setLayout(new BorderLayout());
         panel.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        tableModel = new DefaultTableModel(datiDemo, COLONNE) {
+        tableModel = new DefaultTableModel(new Object[][]{}, COLONNE) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
+
+
+        List<Prodotto> sottoScorta = caricaProdottiSottoScorta();
+        for(Prodotto p : sottoScorta){
+            int scarto = p.getQtaDisponibile() - p.getSogliaMinima();
+            String livello = scarto <= -5 ? "Critico" : "Basso";
+            tableModel.addRow(new Object[]{
+                    p.getID(),
+                    p.getNome(),
+                    p.getCategoria(),
+                    String.valueOf(p.getQtaDisponibile()),
+                    String.valueOf(p.getSogliaMinima()),
+                    String.valueOf(scarto),
+                    livello,
+                    "Riordina"
+            });
+        }
+
+
+
         tabella = new JTable(tableModel);
         tabella.setFont(new Font("SansSerif", Font.PLAIN, 12));
         tabella.setRowHeight(30);

@@ -296,14 +296,34 @@ public class GestisciProdotti extends JPanel {
             if (isModifica) {
                 // Riassegniamo i valori considerando che la tabella visiva ha ancora l'ID alla colonna 0
                 String val = "";
-                if(i == 0) val = tableModel.getValueAt(modelRow, 1).toString(); // Nome
-                if(i == 1) val = tableModel.getValueAt(modelRow, 2).toString(); // Categoria
-                if(i == 2) val = "";                                            // Descrizione (Non presente in tabella)
-                if(i == 3) val = tableModel.getValueAt(modelRow, 3).toString(); // Qty
-                if(i == 4) val = tableModel.getValueAt(modelRow, 4).toString(); // Soglia
-                if(i == 5) val = tableModel.getValueAt(modelRow, 5).toString(); // Posizione
+
+                if(i == 0) val = tableModel.getValueAt(modelRow, 1).toString(); // debug testuale: nome
+                if(i == 1) val = tableModel.getValueAt(modelRow, 2).toString(); // -- categoria
+
+                if(i == 2){
+                    String idProd = tableModel.getValueAt(modelRow, 0).toString();
+                    try {
+                        List<Prodotto> tuttiProdotti = new ProdottoController().getAllProdotti();
+                        if(tuttiProdotti != null){
+                            for(Prodotto p : tuttiProdotti){
+                                if(p.getID().equals(idProd)){
+                                    val = p.getDescrizione() != null ? p.getDescrizione() : "";
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if(i == 3) val = tableModel.getValueAt(modelRow, 3).toString(); // qta;
+
+                // gli indici non coincidono via della disposizione scelta nel database
+                if(i == 4) val = tableModel.getValueAt(modelRow, 5).toString(); // soglia minima
+                if(i == 5) val = tableModel.getValueAt(modelRow, 4).toString(); // posizione
 
                 fields[i].setText(val);
+
+
 
                 if (i == DIALOG_INDEX_SOGLIA && SOGLIA_ASSENTE.equals(val)) {
                     chkNessunaSoglia.setSelected(true);

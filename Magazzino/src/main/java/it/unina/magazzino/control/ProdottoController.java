@@ -75,6 +75,17 @@ public class ProdottoController {
     public boolean modificaProdotto(String idProd, String nome, String categoria, String descrizione, int qtDisp, int sogliaMinima, String posizione, String idResponsabile) {
 
         try {
+
+            System.out.println("[DEBUG modificaProdotto]");
+            System.out.println("  idProd:        " + idProd);
+            System.out.println("  nome:          " + nome);
+            System.out.println("  categoria:     " + categoria);
+            System.out.println("  descrizione:   " + descrizione);
+            System.out.println("  qtDisp:        " + qtDisp);
+            System.out.println("  sogliaMinima:  " + sogliaMinima);
+            System.out.println("  posizione:     " + posizione);
+            System.out.println("  idResponsabile:" + idResponsabile);
+
             ProdottoDAO dao = new ProdottoDAO();
             return dao.aggiornaProdottoCompleto(idProd, nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idResponsabile);
         } catch (Exception e){
