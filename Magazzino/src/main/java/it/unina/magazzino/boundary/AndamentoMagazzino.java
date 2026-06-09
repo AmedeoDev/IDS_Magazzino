@@ -13,7 +13,7 @@ import java.awt.geom.*;
  * Funzionalità:
  *  - Grafici andamento movimenti (carichi/scarichi) negli ultimi 7 giorni (RF13)
  *  - Prodotti più movimentati nel periodo (RF13)
- *  - Indicatori riepilogo: operazioni totali, operatori attivi, valore stimato giacenza (RF14)
+ *  - Indicatori riepilogo: operazioni totali, operatori attivi (RF14)
  *  - Selettore periodo: 7 giorni / 30 giorni / 90 giorni
  */
 public class AndamentoMagazzino extends JPanel {
@@ -44,11 +44,10 @@ public class AndamentoMagazzino extends JPanel {
     private int periodoSelezionato = 7; // default 7 gg
 
     // KPI dinamici per periodo
-    private static final int[] KPI_TOT   = {115, 820, 2380};
-    private static final int[] KPI_OPE   = {8,   9,   11};
-    private static final String[] KPI_VAL= {"€ 48.200","€ 210.000","€ 590.000"};
+    private static final int[] KPI_TOT = {115, 820, 2380};
+    private static final int[] KPI_OPE = {8,   9,   11};
 
-    private JLabel kpiTotLbl, kpiOpeLbl, kpiValLbl;
+    private JLabel kpiTotLbl, kpiOpeLbl;
 
     public AndamentoMagazzino() {
         setOpaque(false);
@@ -96,14 +95,6 @@ public class AndamentoMagazzino extends JPanel {
             btn.addActionListener(e -> {
                 periodoSelezionato = gg;
                 aggiornaVista();
-                // aggiorna visual degli altri toggle
-                for (Component c : toggle.getComponents()) {
-                    if (c instanceof JButton b) {
-                        boolean sel = b.getText().equals(p + " attivo") || b.getText().equals(p);
-                        // Ricolorazione semplice — in un progetto reale si userebbe un modello
-                    }
-                }
-                // Ricrea header toggle (modo più semplice: ricolorazione manuale)
                 for (Component c : toggle.getComponents()) {
                     if (c instanceof JButton b) {
                         int bg2 = Integer.parseInt(b.getActionCommand());
@@ -142,18 +133,16 @@ public class AndamentoMagazzino extends JPanel {
 
     // ── KPI row ──────────────────────────────────────────────────
     private JPanel buildKpiRow() {
-        JPanel row = new JPanel(new GridLayout(1, 3, 12, 0));
+        JPanel row = new JPanel(new GridLayout(1, 2, 12, 0));
         row.setOpaque(false);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 85));
 
         kpiTotLbl = kpiLbl(String.valueOf(KPI_TOT[0]), StyleWMS.BLU_ACCIAIO);
         kpiOpeLbl = kpiLbl(String.valueOf(KPI_OPE[0]), new Color(46,125,50));
-        kpiValLbl = kpiLbl(KPI_VAL[0], new Color(123,31,162));
 
-        row.add(buildKpiCard("Operazioni periodo",    kpiTotLbl, "📦"));
-        row.add(buildKpiCard("Operatori coinvolti",   kpiOpeLbl, "👷"));
-        row.add(buildKpiCard("Valore stimato giacenza", kpiValLbl, "💶"));
+        row.add(buildKpiCard("Operazioni periodo",  kpiTotLbl, "📦"));
+        row.add(buildKpiCard("Operatori coinvolti", kpiOpeLbl, "👷"));
         return row;
     }
 
@@ -200,7 +189,6 @@ public class AndamentoMagazzino extends JPanel {
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 260));
 
-        // Titolo + legenda
         JPanel titoloRiga = new JPanel(new BorderLayout());
         titoloRiga.setOpaque(false);
 
@@ -225,11 +213,6 @@ public class AndamentoMagazzino extends JPanel {
     }
 
     private JLabel chipLegenda(Color col, String testo) {
-        JPanel dot = new JPanel();
-        dot.setPreferredSize(new Dimension(10, 10));
-        dot.setBackground(col);
-        dot.setOpaque(true);
-
         JLabel l = new JLabel("  " + testo);
         l.setFont(new Font("SansSerif", Font.PLAIN, 11));
         l.setForeground(StyleWMS.GRIGIO_TESTO);
@@ -282,7 +265,6 @@ public class AndamentoMagazzino extends JPanel {
         nomeLbl.setForeground(StyleWMS.GRIGIO_TESTO);
         nomeLbl.setPreferredSize(new Dimension(160, 20));
 
-        // Barra progressiva
         Color[] colori = {StyleWMS.BLU_ACCIAIO, StyleWMS.BLU_MEDIO, new Color(46,125,50),
                 new Color(123,31,162), new Color(180,60,10)};
         final Color c = colori[idx % colori.length];
@@ -292,10 +274,8 @@ public class AndamentoMagazzino extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                // Sfondo
                 g2.setColor(new Color(230, 235, 245));
                 g2.fill(new RoundRectangle2D.Float(0, 2, getWidth(), getHeight()-4, 6, 6));
-                // Fill
                 int w = (int)(getWidth() * pct);
                 if (w > 0) {
                     g2.setColor(c);
@@ -328,7 +308,6 @@ public class AndamentoMagazzino extends JPanel {
         barChart.setDati(etich, carichi, scarichi);
         kpiTotLbl.setText(String.valueOf(KPI_TOT[idx]));
         kpiOpeLbl.setText(String.valueOf(KPI_OPE[idx]));
-        kpiValLbl.setText(KPI_VAL[idx]);
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -375,17 +354,15 @@ public class AndamentoMagazzino extends JPanel {
             int chartW = W - PAD_LEFT - PAD_RIGHT;
             int chartH = H - PAD_BOTTOM - PAD_TOP;
 
-            // Valore massimo
             int maxV = 1;
             for (int v : carichi)  maxV = Math.max(maxV, v);
             for (int v : scarichi) maxV = Math.max(maxV, v);
-            maxV = (int)(maxV * 1.15); // margine visivo
+            maxV = (int)(maxV * 1.15);
 
             int n = etichette.length;
             int groupW = (chartW - GROUP_GAP * (n - 1)) / n;
             int barW   = (groupW - BAR_GAP) / 2;
 
-            // Linee guida orizzontali
             g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
             for (int step = 0; step <= 4; step++) {
                 int yLine = PAD_TOP + chartH - (int)((float) step / 4 * chartH);
@@ -399,23 +376,19 @@ public class AndamentoMagazzino extends JPanel {
                 g2.drawString(String.valueOf(valLine), 2, yLine + 4);
             }
 
-            // Barre
             for (int i = 0; i < n; i++) {
                 int x0 = PAD_LEFT + i * (groupW + GROUP_GAP);
 
-                // Carico
                 int hC = (int)((float) carichi[i] / maxV * chartH);
                 int yC = PAD_TOP + chartH - hC;
                 g2.setColor(COL_CARICO);
                 g2.fill(new RoundRectangle2D.Float(x0, yC, barW, hC, 4, 4));
 
-                // Scarico
                 int hS = (int)((float) scarichi[i] / maxV * chartH);
                 int yS = PAD_TOP + chartH - hS;
                 g2.setColor(COL_SCARICO);
                 g2.fill(new RoundRectangle2D.Float(x0 + barW + BAR_GAP, yS, barW, hS, 4, 4));
 
-                // Etichetta asse X
                 g2.setColor(new Color(120,120,120));
                 g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
                 FontMetrics fm = g2.getFontMetrics();
@@ -424,11 +397,9 @@ public class AndamentoMagazzino extends JPanel {
                 g2.drawString(lbl, lx, PAD_TOP + chartH + 16);
             }
 
-            // Asse Y
             g2.setColor(new Color(200, 205, 215));
             g2.setStroke(new BasicStroke(1));
             g2.drawLine(PAD_LEFT, PAD_TOP, PAD_LEFT, PAD_TOP + chartH);
-            // Asse X
             g2.drawLine(PAD_LEFT, PAD_TOP + chartH, PAD_LEFT + chartW, PAD_TOP + chartH);
 
             g2.dispose();
