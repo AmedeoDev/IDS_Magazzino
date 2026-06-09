@@ -196,7 +196,6 @@ public class LoginPage extends JFrame {
                 lblErrore.setVisible(true);
                 txtPassword.setText("");
                 txtPassword.requestFocus();
-                pack(); // ricalcola layout se necessario
             }
         });
     }

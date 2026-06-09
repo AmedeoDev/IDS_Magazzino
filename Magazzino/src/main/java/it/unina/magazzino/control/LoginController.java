@@ -21,6 +21,10 @@ public class LoginController {
         UtenteDAO ud = new UtenteDAO();
         Utente utenteTrovato = ud.effettuaLogin(email.trim(), password);
 
+        if(utenteTrovato == null){
+            throw new Exception("Email o password non corretti!");
+        }
+
         return utenteTrovato;
 
     }

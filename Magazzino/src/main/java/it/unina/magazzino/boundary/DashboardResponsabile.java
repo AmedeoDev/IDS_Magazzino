@@ -69,11 +69,20 @@ public class DashboardResponsabile extends JFrame {
         this.responsabileLoggato = responsabile;
         String nomeUtente = responsabile.getNome() + " " + responsabile.getCognome();
 
+
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Dimension screenSize = toolkit.getScreenSize();
+
+        int width = (int)(screenSize.width * 0.80); // 80% della larghezza
+        int height = (int)(screenSize.height * 0.85); // 85% della lunghezza
+
+        setSize(width, height);
+        setMinimumSize(new Dimension(920,600));
+        setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
         setTitle("WMS — Dashboard Responsabile");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1180, 740);
-        setMinimumSize(new Dimension(920, 600));
-        setLocationRelativeTo(null);
         setBackground(StyleWMS.GRIGIO_NEUTRO);
 
         JPanel root = new JPanel(new BorderLayout()) {
@@ -481,8 +490,6 @@ public class DashboardResponsabile extends JFrame {
         content.add(Box.createVerticalStrut(10));
         content.add(buildAndamento());
         content.add(Box.createVerticalStrut(20));
-        content.add(buildFooter());
-        content.add(Box.createVerticalStrut(16));
 
         JScrollPane scroll = new JScrollPane(content,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -686,10 +693,32 @@ public class DashboardResponsabile extends JFrame {
         panel.setLayout(new GridLayout(1, 3, 20, 0));
         panel.setBorder(new EmptyBorder(22, 22, 22, 22));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
-        panel.add(statBox("Operazioni totali (7gg)",  "89",              StyleWMS.BLU_ACCIAIO));
-        panel.add(statBox("Prodotti più movimentati", "Guanti, Scatole", StyleWMS.BLU_MEDIO));
-        panel.add(statBox("Sotto scorta attualmente", "5",               new Color(198, 40, 40)));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
+
+        String operazioniTotali = "N/D"; // valore di base in caso di 0 operazioni effettuate
+        try {
+            List<Movimento> mov7gg = new MovimentoController().getMovimentiUltimi7Giorni();
+            if(mov7gg != null) operazioniTotali = String.valueOf(mov7gg.size());
+        } catch (Exception ignored){}
+
+        String movimentatiMaggiormente = "N/D";
+        try {
+            List<String> top = new MovimentoController().getProdottiPiuMovimentati(2);
+            if(top != null && !top.isEmpty()) movimentatiMaggiormente = String.join(", ", top);
+        } catch (Exception ignored) {}
+
+        String sottoScortaStr = "N/D";
+        try {
+            List<Prodotto> prodotti = new ProdottoController().getAllProdotti();
+            if(prodotti != null){
+                prodotti.stream().filter(p -> p.getSogliaMinima() != null && p.isSottoScorta()).count();
+            }
+        } catch (Exception ignored) {}
+
+
+        panel.add(statBox("Operazioni totali (7gg)",  operazioniTotali, StyleWMS.BLU_ACCIAIO));
+        panel.add(statBox("Prodotti più movimentati", movimentatiMaggiormente, StyleWMS.BLU_MEDIO));
+        panel.add(statBox("Sotto scorta attualmente", sottoScortaStr, new Color(198, 40, 40)));
         return panel;
     }
 
@@ -714,7 +743,7 @@ public class DashboardResponsabile extends JFrame {
         };
         accent.setOpaque(false);
 
-        JLabel lv = new JLabel(valore);
+        JLabel lv = new JLabel("<html>"+ valore + "</html>");
         lv.setFont(new Font("SansSerif", Font.BOLD, 24));
         lv.setForeground(colore);
 
@@ -728,37 +757,6 @@ public class DashboardResponsabile extends JFrame {
         p.add(Box.createVerticalStrut(4));
         p.add(le);
         return p;
-    }
-
-    private JPanel buildFooter() {
-        JPanel footer = buildCard(StyleWMS.BIANCO, CARD_BORDER);
-        footer.setLayout(new FlowLayout(FlowLayout.LEFT, 10, 10));
-        footer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        footer.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel icon = new JLabel("ℹ");
-        icon.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        icon.setForeground(StyleWMS.BLU_MEDIO);
-
-        JLabel msg = new JLabel("Hai riscontrato qualche problema?");
-        msg.setFont(FONT_LABEL);
-        msg.setForeground(StyleWMS.GRIGIO_TESTO);
-
-        JLabel link = new JLabel("<html><u>Invia un report</u></html>");
-        link.setFont(new Font("SansSerif", Font.BOLD, 12));
-        link.setForeground(StyleWMS.BLU_MEDIO);
-        link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        link.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) {
-                dispose();
-                new ReportBug().setVisible(true);
-            }
-        });
-
-        footer.add(icon);
-        footer.add(msg);
-        footer.add(link);
-        return footer;
     }
 
     private JScrollPane buildTable(String[] colonne, Object[][] dati) {

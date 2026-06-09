@@ -59,9 +59,6 @@ public class DashboardOperatore extends JFrame {
             body.add(vuoto);
         }
 
-        body.add(Box.createVerticalStrut(16));
-        body.add(buildFooter());
-
         JScrollPane scroll = new JScrollPane(body);
         scroll.setBorder(null);
         scroll.getViewport().setOpaque(false);
@@ -355,34 +352,6 @@ public class DashboardOperatore extends JFrame {
         return card;
     }
 
-    // ── Footer ────────────────────────────────────────────────────
-    private JPanel buildFooter() {
-        JPanel footer = new RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
-        footer.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        footer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        footer.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel icon = new JLabel("ℹ");
-        icon.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        icon.setForeground(StyleWMS.BLU_MEDIO);
-
-        JLabel msg = new JLabel("Hai riscontrato qualche problema?");
-        msg.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        msg.setForeground(StyleWMS.GRIGIO_TESTO);
-
-        JLabel link = new JLabel("<html><u>Invia un report</u></html>");
-        link.setFont(new Font("SansSerif", Font.BOLD, 12));
-        link.setForeground(StyleWMS.BLU_MEDIO);
-        link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        link.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { onReport(); }
-        });
-
-        footer.add(icon);
-        footer.add(msg);
-        footer.add(link);
-        return footer;
-    }
 
     // ── Helpers ───────────────────────────────────────────────────
     private String buildInitials(String nome) {
