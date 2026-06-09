@@ -140,7 +140,7 @@ public class MovimentoController {
         try {
             MovimentoDAO dao = new MovimentoDAO();
             if(giorni <= 7) return dao.getMovimentiGiornalieri(giorni);
-            if(giorni >= 30) return dao.getMovimentiSettimanali(giorni);
+            if(giorni <= 30) return dao.getMovimentiSettimanali(giorni);
             return dao.getMovimentiMensili(giorni);
         } catch (Exception e){
             System.out.println("Errore datiPerGrafico: " + e.getMessage());

@@ -295,6 +295,7 @@ public class AndamentoMagazzino extends JPanel {
             String[] etichetta = dati.stream().map(r -> r[0]).toArray(String[]::new);
             int[] carichi = dati.stream().mapToInt(r -> Integer.parseInt(r[1])).toArray();
             int[] scarichi = dati.stream().mapToInt(r -> Integer.parseInt(r[2])).toArray();
+            barChart.setDati(etichetta, carichi, scarichi);
         } else {
             barChart.setDati(new String[]{"Nessun dato"}, new int[0], new int[0]);
         }
@@ -352,6 +353,10 @@ public class AndamentoMagazzino extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
+
+            if(etichette == null || etichette.length == 0 || carichi == null || carichi.length == 0 || scarichi == null || scarichi.length == 0) return;
+
+
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -367,7 +372,7 @@ public class AndamentoMagazzino extends JPanel {
             maxV = (int)(maxV * 1.15);
 
             int n = etichette.length;
-            int groupW = n > 1 ? (chartW - GROUP_GAP * (n-1)) / 1 : chartW;
+            int groupW = n > 1 ? (chartW - GROUP_GAP * (n-1)) / n : chartW;
             int barW   = (groupW - BAR_GAP) / 2;
 
             g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
