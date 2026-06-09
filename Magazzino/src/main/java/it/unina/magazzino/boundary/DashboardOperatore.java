@@ -373,12 +373,6 @@ public class DashboardOperatore extends JFrame {
         effettuaOperazioni.setVisible(true);
     }
 
-    private void onReport() {
-        this.dispose();
-        ReportBug reportBug = new ReportBug();
-        reportBug.setVisible(true);
-    }
-
     // ── RoundPanel ────────────────────────────────────────────────
     static class RoundPanel extends JPanel {
         private Color bg;
