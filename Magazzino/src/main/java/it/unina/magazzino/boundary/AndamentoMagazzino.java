@@ -1,11 +1,15 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.MovimentoController;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
+
+import java.util.List;
 
 /**
  * Pannello "Andamento Magazzino" — RF13 / RF14
@@ -18,36 +22,14 @@ import java.awt.geom.*;
  */
 public class AndamentoMagazzino extends JPanel {
 
-    // Dati demo per i 3 periodi
-    private static final String[][] GIORNI_7 = {
-            {"26/05","27/05","28/05","29/05","30/05","31/05","01/06"},
-    };
-    private static final int[] CARICHI_7  = {8,  14, 11, 18, 22, 15, 27};
-    private static final int[] SCARICHI_7 = {5,  9,  7,  13, 12, 10, 20};
-
-    private static final int[] CARICHI_30  = {60, 72, 55, 88, 95, 70, 110};
-    private static final int[] SCARICHI_30 = {40, 50, 38, 65, 70, 52,  80};
-    private static final String[][] GIORNI_30 = {{"Sett.1","Sett.2","Sett.3","Sett.4","Sett.5","Sett.6","Sett.7"}};
-
-    private static final int[] CARICHI_90  = {200,230,215,260,280,240,310};
-    private static final int[] SCARICHI_90 = {140,160,150,190,200,175,220};
-    private static final String[][] GIORNI_90 = {{"Mese1W1","Mese1W2","Mese2W1","Mese2W2","Mese3W1","Mese3W2","Mese3W3"}};
-
-    // Prodotti più movimentati
-    private static final String[] TOP_PRODOTTI = {
-            "Guanti latex", "Scatole S", "Nastro da imballo", "Pallets 80x120", "Etichette"
-    };
-    private static final int[] TOP_VALORI = {85, 71, 64, 58, 45};
-
     private BarChartPanel barChart;
     private JLabel lblPeriodo;
     private int periodoSelezionato = 7; // default 7 gg
 
-    // KPI dinamici per periodo
-    private static final int[] KPI_TOT = {115, 820, 2380};
-    private static final int[] KPI_OPE = {8,   9,   11};
 
     private JLabel kpiTotLbl, kpiOpeLbl;
+
+    private JPanel topProdottiPanel;
 
     public AndamentoMagazzino() {
         setOpaque(false);
@@ -64,7 +46,12 @@ public class AndamentoMagazzino extends JPanel {
         centro.add(Box.createVerticalStrut(14));
         centro.add(buildBarChartSection());
         centro.add(Box.createVerticalStrut(14));
-        centro.add(buildTopProdottiSection());
+
+        topProdottiPanel = new JPanel(new BorderLayout());
+        topProdottiPanel.setOpaque(false);
+        topProdottiPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        topProdottiPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
+        centro.add(topProdottiPanel);
 
         JScrollPane scroll = new JScrollPane(centro,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -74,6 +61,8 @@ public class AndamentoMagazzino extends JPanel {
         scroll.setOpaque(false);
         scroll.getVerticalScrollBar().setUnitIncrement(14);
         add(scroll, BorderLayout.CENTER);
+
+        aggiornaVista();
     }
 
     // ── Header + selettore periodo ───────────────────────────────
@@ -138,8 +127,8 @@ public class AndamentoMagazzino extends JPanel {
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 85));
 
-        kpiTotLbl = kpiLbl(String.valueOf(KPI_TOT[0]), StyleWMS.BLU_ACCIAIO);
-        kpiOpeLbl = kpiLbl(String.valueOf(KPI_OPE[0]), new Color(46,125,50));
+        kpiTotLbl = kpiLbl("...", StyleWMS.BLU_ACCIAIO);
+        kpiOpeLbl = kpiLbl("...", new Color(46, 125, 50));
 
         row.add(buildKpiCard("Operazioni periodo",  kpiTotLbl, "📦"));
         row.add(buildKpiCard("Operatori coinvolti", kpiOpeLbl, "👷"));
@@ -204,7 +193,7 @@ public class AndamentoMagazzino extends JPanel {
         titoloRiga.add(titolo, BorderLayout.WEST);
         titoloRiga.add(legenda, BorderLayout.EAST);
 
-        barChart = new BarChartPanel(GIORNI_7[0], CARICHI_7, SCARICHI_7);
+        barChart = new BarChartPanel(new String[0], new int[0], new int[0]);
         barChart.setPreferredSize(new Dimension(0, 180));
 
         panel.add(titoloRiga, BorderLayout.NORTH);
@@ -227,34 +216,32 @@ public class AndamentoMagazzino extends JPanel {
         return l;
     }
 
-    // ── Top prodotti movimentati ─────────────────────────────────
-    private JPanel buildTopProdottiSection() {
-        DashboardOperatore.RoundPanel panel =
-                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
-        panel.setLayout(new BorderLayout(0, 10));
-        panel.setBorder(new EmptyBorder(16, 16, 16, 16));
-        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 200));
-
-        JLabel titolo = new JLabel("Prodotti più movimentati nel periodo");
-        titolo.setFont(new Font("SansSerif", Font.BOLD, 13));
-        titolo.setForeground(StyleWMS.BLU_ACCIAIO);
-        panel.add(titolo, BorderLayout.NORTH);
-
+    private JPanel buildBarreTop(List<String[]> top) {
         JPanel barre = new JPanel();
         barre.setOpaque(false);
         barre.setLayout(new BoxLayout(barre, BoxLayout.Y_AXIS));
 
-        int max = TOP_VALORI[0];
-        for (int i = 0; i < TOP_PRODOTTI.length; i++) {
-            barre.add(buildBarRow(TOP_PRODOTTI[i], TOP_VALORI[i], max, i));
+        if (top.isEmpty()) {
+            JLabel nessuno = new JLabel("Nessun movimento nel periodo selezionato.");
+            nessuno.setFont(new Font("SansSerif", Font.ITALIC, 12));
+            nessuno.setForeground(StyleWMS.GRIGIO_TESTO);
+            barre.add(nessuno);
+            return barre;
+        }
+
+        Color[] colori = {StyleWMS.BLU_ACCIAIO, StyleWMS.BLU_MEDIO,
+                new Color(46, 125, 50), new Color(123, 31, 162), new Color(180, 60, 10)};
+
+        int max = Integer.parseInt(top.get(0)[1]);
+        for (int i = 0; i < top.size(); i++) {
+            int valore = Integer.parseInt(top.get(i)[1]);
+            barre.add(buildBarRow(top.get(i)[0], valore, max, colori[i % colori.length]));
             barre.add(Box.createVerticalStrut(6));
         }
-        panel.add(barre, BorderLayout.CENTER);
-        return panel;
+        return barre;
     }
 
-    private JPanel buildBarRow(String nome, int valore, int max, int idx) {
+    private JPanel buildBarRow(String nome, int valore, int max, Color colore) {
         JPanel row = new JPanel(new BorderLayout(8, 0));
         row.setOpaque(false);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
@@ -265,21 +252,17 @@ public class AndamentoMagazzino extends JPanel {
         nomeLbl.setForeground(StyleWMS.GRIGIO_TESTO);
         nomeLbl.setPreferredSize(new Dimension(160, 20));
 
-        Color[] colori = {StyleWMS.BLU_ACCIAIO, StyleWMS.BLU_MEDIO, new Color(46,125,50),
-                new Color(123,31,162), new Color(180,60,10)};
-        final Color c = colori[idx % colori.length];
-        final float pct = (float) valore / max;
-
+        final float pct = max > 0 ? (float) valore / max : 0;
         JPanel barra = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(new Color(230, 235, 245));
-                g2.fill(new RoundRectangle2D.Float(0, 2, getWidth(), getHeight()-4, 6, 6));
-                int w = (int)(getWidth() * pct);
+                g2.fill(new RoundRectangle2D.Float(0, 2, getWidth(), getHeight() - 4, 6, 6));
+                int w = (int) (getWidth() * pct);
                 if (w > 0) {
-                    g2.setColor(c);
-                    g2.fill(new RoundRectangle2D.Float(0, 2, w, getHeight()-4, 6, 6));
+                    g2.setColor(colore);
+                    g2.fill(new RoundRectangle2D.Float(0, 2, w, getHeight() - 4, 6, 6));
                 }
                 g2.dispose();
             }
@@ -288,7 +271,7 @@ public class AndamentoMagazzino extends JPanel {
 
         JLabel valLbl = new JLabel(String.valueOf(valore));
         valLbl.setFont(new Font("SansSerif", Font.BOLD, 11));
-        valLbl.setForeground(c);
+        valLbl.setForeground(colore);
         valLbl.setPreferredSize(new Dimension(34, 20));
         valLbl.setHorizontalAlignment(SwingConstants.RIGHT);
 
@@ -298,16 +281,40 @@ public class AndamentoMagazzino extends JPanel {
         return row;
     }
 
+
     // ── Aggiorna dati al cambio periodo ─────────────────────────
     private void aggiornaVista() {
-        int idx = periodoSelezionato == 7 ? 0 : periodoSelezionato == 30 ? 1 : 2;
-        int[] carichi  = idx == 0 ? CARICHI_7  : idx == 1 ? CARICHI_30  : CARICHI_90;
-        int[] scarichi = idx == 0 ? SCARICHI_7 : idx == 1 ? SCARICHI_30 : SCARICHI_90;
-        String[] etich = idx == 0 ? GIORNI_7[0] : idx == 1 ? GIORNI_30[0] : GIORNI_90[0];
 
-        barChart.setDati(etich, carichi, scarichi);
-        kpiTotLbl.setText(String.valueOf(KPI_TOT[idx]));
-        kpiOpeLbl.setText(String.valueOf(KPI_OPE[idx]));
+        MovimentoController controller = new MovimentoController();
+
+        kpiTotLbl.setText(String.valueOf(controller.countMovimentiPeriodo(periodoSelezionato)));
+        kpiOpeLbl.setText(String.valueOf(controller.countOperatoriDistantiPeriodo(periodoSelezionato)));
+
+        List<String[]> dati = controller.getDatiGrafico(periodoSelezionato);
+        if(!dati.isEmpty()){
+            String[] etichetta = dati.stream().map(r -> r[0]).toArray(String[]::new);
+            int[] carichi = dati.stream().mapToInt(r -> Integer.parseInt(r[1])).toArray();
+            int[] scarichi = dati.stream().mapToInt(r -> Integer.parseInt(r[2])).toArray();
+        } else {
+            barChart.setDati(new String[]{"Nessun dato"}, new int[0], new int[0]);
+        }
+
+        List<String[]> top = controller.getProdottiMovimentati(5, periodoSelezionato);
+        topProdottiPanel.removeAll();
+
+        DashboardOperatore.RoundPanel wrapper = new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
+        wrapper.setLayout(new BorderLayout(0, 10));
+        wrapper.setBorder(new EmptyBorder(16, 16, 16, 16));
+
+        JLabel titolo = new JLabel("Prodotti più movimentati nel periodo");
+        titolo.setFont(new Font("SansSerif", Font.BOLD, 13));
+        wrapper.add(titolo, BorderLayout.NORTH);
+        wrapper.add(buildBarreTop(top), BorderLayout.CENTER);
+
+        topProdottiPanel.add(wrapper, BorderLayout.CENTER);
+        topProdottiPanel.revalidate();
+        topProdottiPanel.repaint();
+
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -360,7 +367,7 @@ public class AndamentoMagazzino extends JPanel {
             maxV = (int)(maxV * 1.15);
 
             int n = etichette.length;
-            int groupW = (chartW - GROUP_GAP * (n - 1)) / n;
+            int groupW = n > 1 ? (chartW - GROUP_GAP * (n-1)) / 1 : chartW;
             int barW   = (groupW - BAR_GAP) / 2;
 
             g2.setFont(new Font("SansSerif", Font.PLAIN, 9));

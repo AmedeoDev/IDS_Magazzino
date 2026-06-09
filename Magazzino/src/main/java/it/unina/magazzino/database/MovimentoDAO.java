@@ -156,4 +156,120 @@ public class MovimentoDAO {
         }
         return lista;
     }
+
+    public int countMovimentiPerPeriodo(int giorni) throws SQLException{
+        String query = "SELECT COUNT(*) FROM movimento WHERE Data >= DATE_SUB(CURDAE(), INTERVAL ? DAY)";
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+            stmt.setInt(1, giorni);
+            try (ResultSet rs = stmt.executeQuery()){
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    public int countOperatoriDistintiPeriodo(int giorni) throws SQLException {
+        String query = "SELECT COUNT(DISTINCT IdUtenteOperatore) FROM movimento WHERE Data >= DATE_SUB(CURDATE(), INTERVAL ? DAY)";
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+            stmt.setInt(1, giorni);
+            try (ResultSet rs = stmt.executeQuery()){
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+        }
+    }
+
+    public List<String[]> getMovimentiGiornalieri(int giorni) throws SQLException{
+        String query = "SELCT DATE_FORMAT(Data, '%d/%m') AS giorno, " +
+                "SUM(CASE WHEN TipoMovimento = 'Carico' THEN 1 ELSE 0 END) AS carichi, " +
+                "SUM(CASE WHEN TipoMovimento = 'Scarico' THEN 1 ELSE 0 END) AS scarichi " +
+                "FROM MOVIMENTO WHERE Data >= DATE_SUB(CURDATE(), INTERVAL ? DAY) " +
+                "GROUP BY giorno ORDER BY MIN(Data) ASC";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+
+            stmt.setInt(1, giorni);
+            List<String[]> result = new ArrayList<>();
+            try (ResultSet rs = stmt.executeQuery()){
+                while(rs.next()){
+                    result.add(new String[]{
+                            rs.getString("giorno"),
+                            rs.getString("carichi"),
+                            rs.getString("scarichi"),
+                    });
+                }
+            }
+            return result;
+        }
+    }
+
+    public List<String[]> getMovimentiSettimanali(int giorni) throws SQLException{
+        String query = "SELECT CONCAT('Sett.', WEEK(Data) - WEEK(DATE_SUB(CURDATE(), INTERVAL ? DAY)) + 1) AS periodo, " +
+                "SUM(CASE WHEN TipoMovimento = 'Carico' THEN 1 ELSE 0 END) AS carico, " +
+                "SUM(CASE WHEN TipoMovimento = 'Scarico' THEN 1 ESLE 0 END) AS scarico " +
+                "FROM movimento WHERE Data >= DATE_SUB(CURDATE(), INTERVAL ? DAY) GROUP BY WEEK(Data) ORDER BY MIN(Data) ASC";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+            stmt.setInt(1, giorni);
+            stmt.setInt(2, giorni);
+            List<String[]> ris = new ArrayList<>();
+            try (ResultSet rs = stmt.executeQuery()){
+                while (rs.next()){
+                    ris.add(new String[]{
+                            rs.getString("periodo"),
+                            rs.getString("carico"),
+                            rs.getString("scarico")
+                    });
+                }
+            }
+            return ris;
+        }
+    }
+
+    public List<String[]> getMovimentiMensili(int giorni) throws SQLException{
+        String query = "SELECT DATE_FORMAT(Data, '%b %Y') AS periodo, " +
+                "SUM(CASE WHEN TipoMovimento = 'Carico' THEN 1 ELSE 0 END) AS carico, " +
+                "SUM(CASE WHEN TipoMovimento = 'Scarico' THEN 1 ELSE 0 END) AS scarico " +
+                "FROM movimento WHERE Data >= DATE_SUB(CURDATE(), INTERVAL ? DAY) GROUP BY periodo ORDER BY MIN(Data) ASC";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+            stmt.setInt(1, giorni);
+            List<String[]> ris = new ArrayList<>();
+            try (ResultSet rs = stmt.executeQuery()){
+                ris.add(new String[]{
+                        rs.getString("periodo"),
+                        rs.getString("carico"),
+                        rs.getString("scarico"),
+                });
+            }
+            return ris;
+        }
+    }
+
+    public List<String[]> getProdottiPiuMovimentati(int n, int giorni) throws SQLException{
+        String query = "SELECT p.Nome, COUNT(*) AS freq FROM movimento m " +
+                "JOIN prodotto p on m.IdProd = p.IdProd " +
+                "WHERE m.Data >= DATE_SUB(CURDATE(), INTERVAL ? DAY) " +
+                "GROUP BY m.IdProd, p.Nome ORDER BY freq DESC LIMIT ?";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+
+            stmt.setInt(1, giorni);
+            stmt.setInt(2, n);
+            List<String[]> risultato = new ArrayList<>();
+            try (ResultSet rs = stmt.executeQuery()){
+                while(rs.next()){
+                    risultato.add(new String[]{
+                            rs.getString("Nome"),
+                            rs.getString("freq"),
+                    });
+                }
+            }
+            return risultato;
+        }
+    }
 }

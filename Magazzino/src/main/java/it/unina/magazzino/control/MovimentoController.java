@@ -9,6 +9,7 @@ import it.unina.magazzino.entity.Prodotto;
 
 import java.sql.Date;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MovimentoController {
@@ -116,6 +117,42 @@ public class MovimentoController {
         } catch (Exception e){
             System.out.println("Erroree getMovimentiOggi: " + e.getMessage());
             return null;
+        }
+    }
+
+    public int countMovimentiPeriodo(int giorni){
+        try {
+            return new MovimentoDAO().countMovimentiPerPeriodo(giorni);
+        } catch (Exception e){
+            return 0;
+        }
+    }
+
+    public int countOperatoriDistantiPeriodo(int giorni){
+        try {
+            return new MovimentoDAO().countOperatoriDistintiPeriodo(giorni);
+        } catch (Exception e){
+            return 0;
+        }
+    }
+
+    public List<String[]> getDatiGrafico(int giorni){
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            if(giorni <= 7) return dao.getMovimentiGiornalieri(giorni);
+            if(giorni >= 30) return dao.getMovimentiSettimanali(giorni);
+            return dao.getMovimentiMensili(giorni);
+        } catch (Exception e){
+            System.out.println("Errore datiPerGrafico: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public List<String[]> getProdottiMovimentati(int n, int giorni){
+        try {
+            return new MovimentoDAO().getProdottiPiuMovimentati(n, giorni);
+        } catch (Exception e){
+            return new ArrayList<>();
         }
     }
 }
