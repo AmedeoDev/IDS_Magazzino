@@ -276,14 +276,17 @@ public class ProdottiSottoScorta extends JPanel {
                 if (col == 7 && row >= 0) {
                     String nomeProd = tableModel.getValueAt(row, 1).toString();
                     String qty      = tableModel.getValueAt(row, 3).toString();
-                    String soglia   = tableModel.getValueAt(row, 4).toString();
-                    int riordino    = Integer.parseInt(soglia) * 2; // logica placeholder
+                    String sogliaStr   = tableModel.getValueAt(row, 4).toString();
+                    int riordino    = Integer.parseInt(sogliaStr) * 2; // logica placeholder
                     int conferma = JOptionPane.showConfirmDialog(ProdottiSottoScorta.this,
                             "<html>Prodotto: <b>" + nomeProd + "</b><br>" +
-                                    "Quantità attuale: <b>" + qty + "</b>  — Soglia: <b>" + soglia + "</b><br><br>" +
+                                    "Quantità attuale: <b>" + qty + "</b>  — Soglia: <b>" + sogliaStr + "</b><br><br>" +
                                     "Vuoi avviare un ordine di riordino per <b>" + riordino + " unità</b>?</html>",
                             "Conferma Riordino", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (conferma == JOptionPane.YES_OPTION) {
+                        String idProd = tableModel.getValueAt(row, 0).toString();
+                        int soglia = Integer.parseInt(tableModel.getValueAt(row, 4).toString());
+                        new ProdottoController().aggiornaQuantitaProdotto(idProd, soglia*2);
                         JOptionPane.showMessageDialog(ProdottiSottoScorta.this,
                                 "Ordine di riordino registrato per «" + nomeProd + "» (" + riordino + " unità).",
                                 "Riordino Inviato", JOptionPane.INFORMATION_MESSAGE);
@@ -354,6 +357,14 @@ public class ProdottiSottoScorta extends JPanel {
             JOptionPane.showMessageDialog(this,
                     "Ordini di riordino inviati per tutti i " + totale + " prodotti critici.",
                     "Riordino Massivo", JOptionPane.INFORMATION_MESSAGE);
+
+            ProdottoController controller = new ProdottoController();
+            for(int i = 0; i < totale; ++i){
+                String idProd = tableModel.getValueAt(i, 0).toString();
+                int soglia = Integer.parseInt(tableModel.getValueAt(i, 4).toString());
+                int nuovaQta = soglia*2;
+                controller.aggiornaQuantitaProdotto(idProd, nuovaQta);
+            }
 
             // ── Rimozione di tutte le righe: scorrendo dal fondo evita
             // problemi di indice durante la rimozione sequenziale
