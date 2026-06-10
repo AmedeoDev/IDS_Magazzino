@@ -112,7 +112,8 @@ public class DashboardResponsabile extends JFrame {
         sidebarPanel = buildSidebar();
         wrapper.add(sidebarPanel, BorderLayout.WEST);
 
-        // area centrale dove verrà sostituito il pannello di sezione
+        // area centrale dove verrà sostituito il pannello di sezione (a destra rispetto alla sidebar....è
+        // il "contenitore" che ospita di volta in volta Panoramica, GestisciProdotti, StoricoMovimenti ecc.)
         contenutoWrapper = new JPanel(new BorderLayout());
         contenutoWrapper.setOpaque(false);
         contenutoWrapper.add(buildPanoramica(), BorderLayout.CENTER);
