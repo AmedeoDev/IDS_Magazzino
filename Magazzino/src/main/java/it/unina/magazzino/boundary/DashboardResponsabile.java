@@ -69,12 +69,11 @@ public class DashboardResponsabile extends JFrame {
         this.responsabileLoggato = responsabile;
         String nomeUtente = responsabile.getNome() + " " + responsabile.getCognome();
 
-
         Toolkit toolkit = Toolkit.getDefaultToolkit();
         Dimension screenSize = toolkit.getScreenSize();
 
-        int width = (int)(screenSize.width * 0.80); // 80% della larghezza
-        int height = (int)(screenSize.height * 0.85); // 85% della lunghezza
+        int width = (int)(screenSize.width * 0.80);
+        int height = (int)(screenSize.height * 0.85);
 
         setSize(width, height);
         setMinimumSize(new Dimension(920,600));
@@ -85,6 +84,7 @@ public class DashboardResponsabile extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setBackground(StyleWMS.GRIGIO_NEUTRO);
 
+        // pannello radice con sfondo decorativo
         JPanel root = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -103,14 +103,17 @@ public class DashboardResponsabile extends JFrame {
         root.setOpaque(true);
         setContentPane(root);
 
+        // costruisce la topbar con nome utente e logo
         root.add(buildTopbar(nomeUtente, logoPath), BorderLayout.NORTH);
 
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
 
+        // costruisce la sidebar di navigazione e la aggiunge a sinistra
         sidebarPanel = buildSidebar();
         wrapper.add(sidebarPanel, BorderLayout.WEST);
 
+        // area centrale dove verrà sostituito il pannello di sezione
         contenutoWrapper = new JPanel(new BorderLayout());
         contenutoWrapper.setOpaque(false);
         contenutoWrapper.add(buildPanoramica(), BorderLayout.CENTER);
@@ -119,11 +122,13 @@ public class DashboardResponsabile extends JFrame {
         root.add(wrapper, BorderLayout.CENTER);
     }
 
+    // decrementa il badge rosso sulle notifiche nella sidebar
     public void decrementaNotifica() {
         notificheCount = Math.max(0, notificheCount - 1);
         sidebarPanel.repaint();
     }
 
+    // azzera il contatore di notifiche
     public void azzeraNotifiche() {
         notificheCount = 0;
         sidebarPanel.repaint();
@@ -131,8 +136,9 @@ public class DashboardResponsabile extends JFrame {
 
     public int getNotificheCount() { return notificheCount; }
 
-    // ══ TOP BAR ══════════════════════════════════════════════════
+    // TOP BAR
     private JPanel buildTopbar(String nomeUtente, String logoPath) {
+        // barra superiore con gradiente blu
         JPanel bar = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -149,15 +155,15 @@ public class DashboardResponsabile extends JFrame {
         bar.setOpaque(false);
         bar.setBorder(new EmptyBorder(13, 8, 13, 22));
 
-        // — LEFT: BoxLayout X_AXIS per controllo preciso degli spazi
         JPanel left = new JPanel();
         left.setOpaque(false);
         left.setLayout(new BoxLayout(left, BoxLayout.X_AXIS));
 
+        // avatar con le iniziali dell'utente
         left.add(buildAvatar(nomeUtente));
         left.add(Box.createHorizontalStrut(12));
 
-        // Separatore verticale
+        // separatore verticale tra avatar e testi
         JPanel divider = new JPanel() {
             @Override public Dimension getPreferredSize()  { return new Dimension(1, 36); }
             @Override public Dimension getMaximumSize()    { return new Dimension(1, 36); }
@@ -171,7 +177,6 @@ public class DashboardResponsabile extends JFrame {
         left.add(divider);
         left.add(Box.createHorizontalStrut(12));
 
-        // Testi: BoxLayout Y_AXIS con allineamento LEFT esplicito
         JPanel testi = new JPanel();
         testi.setOpaque(false);
         testi.setLayout(new BoxLayout(testi, BoxLayout.Y_AXIS));
@@ -182,12 +187,12 @@ public class DashboardResponsabile extends JFrame {
         nome.setForeground(StyleWMS.BIANCO);
         nome.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // ruoloRow con BoxLayout X_AXIS per evitare padding implicito di FlowLayout
         JPanel ruoloRow = new JPanel();
         ruoloRow.setOpaque(false);
         ruoloRow.setLayout(new BoxLayout(ruoloRow, BoxLayout.X_AXIS));
         ruoloRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // pallino decorativo verde accanto al ruolo
         JPanel dot = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -216,9 +221,9 @@ public class DashboardResponsabile extends JFrame {
 
         left.add(testi);
 
-        // — RIGHT
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         right.setOpaque(false);
+        // prova a caricare il logo aziendale, altrimenti mostra il badge testuale "WMS"
         right.add(buildLogoWidget(logoPath));
 
         bar.add(left, BorderLayout.WEST);
@@ -227,6 +232,7 @@ public class DashboardResponsabile extends JFrame {
     }
 
     private JComponent buildLogoWidget(String logoPath) {
+        // carica l'immagine logo dal classpath se il percorso è valido
         if (logoPath != null) {
             try {
                 java.net.URL imgURL = getClass().getResource(logoPath);
@@ -241,6 +247,7 @@ public class DashboardResponsabile extends JFrame {
                 }
             } catch (Exception ignored) {}
         }
+        // fallback: badge testuale se il logo non è disponibile
         return buildTextBadge();
     }
 
@@ -266,6 +273,7 @@ public class DashboardResponsabile extends JFrame {
     }
 
     private JPanel buildAvatar(String nomeUtente) {
+        // estrae le iniziali dal nome completo per mostrarle nell'avatar circolare
         String iniziali = buildInitials(nomeUtente);
         JPanel avatar = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
@@ -293,7 +301,7 @@ public class DashboardResponsabile extends JFrame {
         return avatar;
     }
 
-    // ══ SIDEBAR ══════════════════════════════════════════════════
+    // SIDEBAR
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
@@ -320,6 +328,7 @@ public class DashboardResponsabile extends JFrame {
         sezioneLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(sezioneLbl);
 
+        // aggiunge una voce di menu per ciascuna sezione
         for (String voce : VOCI) {
             sidebar.add(voceMenu(sidebar, voce));
             sidebar.add(Box.createVerticalStrut(2));
@@ -327,6 +336,7 @@ public class DashboardResponsabile extends JFrame {
 
         sidebar.add(Box.createVerticalGlue());
 
+        // separatore orizzontale prima del logout
         JPanel sep = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -352,6 +362,7 @@ public class DashboardResponsabile extends JFrame {
     }
 
     private JPanel voceMenu(JPanel sidebar, String testo) {
+        // associa l'icona Material alla voce di menu corrispondente
         FontIcon fontIcon = switch (testo) {
             case "Panoramica"            -> FontIcon.of(Material2OutlinedAL.DASHBOARD,           18, StyleWMS.BIANCO_TALCO);
             case "Gestisci Prodotti"     -> FontIcon.of(Material2OutlinedAL.CATEGORY,            18, StyleWMS.BIANCO_TALCO);
@@ -361,6 +372,7 @@ public class DashboardResponsabile extends JFrame {
             default                      -> FontIcon.of(Material2OutlinedAL.FIBER_MANUAL_RECORD, 18, StyleWMS.BIANCO_TALCO);
         };
 
+        // solo "Prodotti Sotto Scorta" mostra il badge rosso con il contatore
         final boolean hasBadge = "Prodotti Sotto Scorta".equals(testo);
 
         JPanel row = new JPanel() {
@@ -370,6 +382,7 @@ public class DashboardResponsabile extends JFrame {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
                     @Override public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) {
+                        // naviga alla sezione solo se diversa da quella attiva
                         if (!testo.equals(sezioneAttiva)) {
                             sezioneAttiva = testo;
                             navigaA(testo);
@@ -385,9 +398,11 @@ public class DashboardResponsabile extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+                // sfondo bianco semitrasparente per la voce attiva, altrumenti più leggero per hover
                 if (attivo) {
                     g2.setColor(new Color(255, 255, 255, 25));
                     g2.fill(new RoundRectangle2D.Float(8, 2, getWidth()-16, getHeight()-4, 10, 10));
+                    // indicatore verticale azzurro a sinistra per la voce attiva
                     g2.setColor(StyleWMS.AZZURRO_LIGHT);
                     g2.fillRoundRect(8, 6, 3, getHeight()-12, 3, 3);
                 } else if (hovered) {
@@ -395,6 +410,7 @@ public class DashboardResponsabile extends JFrame {
                     g2.fill(new RoundRectangle2D.Float(8, 2, getWidth()-16, getHeight()-4, 10, 10));
                 }
 
+                // disegna il badge rosso con il numero di notifiche se > 0
                 if (hasBadge && notificheCount > 0) {
                     String etichetta = String.valueOf(notificheCount);
                     Font badgeFont = new Font("SansSerif", Font.BOLD, 9);
@@ -429,6 +445,7 @@ public class DashboardResponsabile extends JFrame {
         row.setBorder(new EmptyBorder(4, 18, 4, 18));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
+        // cambia il colore dell'icona a bianco pieno se la voce è attiva
         JLabel ico = new JLabel(fontIcon) {
             @Override public void paint(Graphics g) {
                 fontIcon.setIconColor(
@@ -438,6 +455,7 @@ public class DashboardResponsabile extends JFrame {
         };
         ico.setBorder(new EmptyBorder(0, 0, 0, 12));
 
+        // testo in grassetto se la voce è quella attiva
         JLabel lbl = new JLabel(testo) {
             @Override public Font getFont() {
                 return new Font("SansSerif",
@@ -454,6 +472,7 @@ public class DashboardResponsabile extends JFrame {
     }
 
     private void navigaA(String sezione) {
+        // crea il pannello corrispondente alla sezione selezionata
         JComponent pannello = switch (sezione) {
             case "Gestisci Prodotti"     -> new GestisciProdotti(responsabileLoggato.getID_Utenete());
             case "Storico Movimenti"     -> new StoricoMovimenti();
@@ -461,13 +480,14 @@ public class DashboardResponsabile extends JFrame {
             case "Andamento Magazzino"   -> new AndamentoMagazzino();
             default                      -> buildPanoramica();
         };
+        // sostituisce il contenuto centrale senza ricreare l'intera finestra
         contenutoWrapper.removeAll();
         contenutoWrapper.add(pannello, BorderLayout.CENTER);
         contenutoWrapper.revalidate();
         contenutoWrapper.repaint();
     }
 
-    // ══ PANORAMICA ═══════════════════════════════════════════════
+    // PANORAMICA
     private JScrollPane buildPanoramica() {
         JPanel content = new JPanel();
         content.setOpaque(false);
@@ -476,6 +496,7 @@ public class DashboardResponsabile extends JFrame {
 
         content.add(buildPageHeader("Panoramica", "Riepilogo generale del magazzino"));
         content.add(Box.createVerticalStrut(20));
+        // riga con le 3 KPI card (prodotti totali, movimenti oggi, sotto scorta)
         content.add(buildKpiRow());
         content.add(Box.createVerticalStrut(28));
         content.add(buildSectionLabel("Ultimi Movimenti", "RF11"));
@@ -527,7 +548,7 @@ public class DashboardResponsabile extends JFrame {
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 108));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Prodotti totali
+        // recupera il numero totale di prodotti dal database tramite il controller
         String prodottiTotali = "N/D";
         String subProdotti = "";
         try {
@@ -535,7 +556,7 @@ public class DashboardResponsabile extends JFrame {
             if (prodotti != null) prodottiTotali = String.valueOf(prodotti.size());
         } catch (Exception e) {}
 
-        // Prodotti sotto scorta
+        // conta i prodotti con quantità uguale o inferiore alla soglia minima
         int prodottiSottoScorta = 0;
         try {
             List<Prodotto> sottoScorta = new ProdottoController().getAllProdotti();
@@ -546,7 +567,7 @@ public class DashboardResponsabile extends JFrame {
             }
         } catch (Exception e) {}
 
-        // Movimenti odierni
+        // confronta i movimenti di oggi con quelli dek giorno precedente per mostrare il trend
         String movimentiOggi = "N/D";
         String subMovimenti = "";
         try {
@@ -563,6 +584,7 @@ public class DashboardResponsabile extends JFrame {
             }
         } catch (Exception e) {}
 
+        // aggiorna il badge nella sidebar con il numero di prodotti sotto scorta
         notificheCount = prodottiSottoScorta;
         sidebarPanel.repaint();
 
@@ -589,6 +611,7 @@ public class DashboardResponsabile extends JFrame {
                 g2.setColor(CARD_BORDER);
                 g2.setStroke(new BasicStroke(1f));
                 g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth()-1, getHeight()-1, 14, 14));
+                // striscia colorata in cima alla card per identificare il tipo di KPI
                 GradientPaint gp = new GradientPaint(0, 0,
                         new Color(colore.getRed(), colore.getGreen(), colore.getBlue(), 220),
                         getWidth(), 0,
@@ -631,11 +654,13 @@ public class DashboardResponsabile extends JFrame {
         Object[][] dati = {};
 
         try {
+            // carica gli ultimi 5 movimenti dal database per il riepilogo nella panoramica
             List<Movimento> recenti = new MovimentoController().getUltimiMovimenti(5);
             if (recenti != null && !recenti.isEmpty()) {
                 dati = new Object[recenti.size()][5];
                 for (int i = 0; i < recenti.size(); ++i) {
                     Movimento m = recenti.get(i);
+                    // aggiunge segno + o - alla quantità in base al tipo di movimento
                     String segno = "Carico".equals(m.getTipoMovimento()) ? "+" : "-";
                     dati[i][0] = m.getIdProdotto();
                     dati[i][1] = m.getTipoMovimento();
@@ -663,6 +688,7 @@ public class DashboardResponsabile extends JFrame {
         Object[][] dati = {};
 
         try {
+            // filtra dal lato client i prodotti con isSottoScorta() == true
             List<Prodotto> tuttiProdotti = new ProdottoController().getAllProdotti();
             List<Object[]> righe = new ArrayList<>();
             if (tuttiProdotti != null) {
@@ -695,12 +721,14 @@ public class DashboardResponsabile extends JFrame {
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
 
-        String operazioniTotali = "N/D"; // valore di base in caso di 0 operazioni effettuate
+        // recupera il numero di movimenti negli ultimi 7 giorni
+        String operazioniTotali = "N/D";
         try {
             List<Movimento> mov7gg = new MovimentoController().getMovimentiUltimi7Giorni();
             if(mov7gg != null) operazioniTotali = String.valueOf(mov7gg.size());
         } catch (Exception ignored){}
 
+        // recupera i 2 prodotti più movimentati nel periodo
         String movimentatiMaggiormente = "N/D";
         try {
             List<String> top = new MovimentoController().getProdottiPiuMovimentati(2);
@@ -715,7 +743,6 @@ public class DashboardResponsabile extends JFrame {
             }
         } catch (Exception ignored) {}
 
-
         panel.add(statBox("Operazioni totali (7gg)",  operazioniTotali, StyleWMS.BLU_ACCIAIO));
         panel.add(statBox("Prodotti più movimentati", movimentatiMaggiormente, StyleWMS.BLU_MEDIO));
         panel.add(statBox("Sotto scorta attualmente", sottoScortaStr, new Color(198, 40, 40)));
@@ -727,6 +754,7 @@ public class DashboardResponsabile extends JFrame {
         p.setOpaque(false);
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
+        // piccola barra colorata decorativa sopra il valore
         JPanel accent = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -760,6 +788,7 @@ public class DashboardResponsabile extends JFrame {
     }
 
     private JScrollPane buildTable(String[] colonne, Object[][] dati) {
+        // tabella non editabile con righe alternate bianco/grigio chiarissimo
         DefaultTableModel model = new DefaultTableModel(dati, colonne) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
@@ -823,6 +852,7 @@ public class DashboardResponsabile extends JFrame {
         lbl.setFont(new Font(Font.MONOSPACED, Font.BOLD, 10));
         lbl.setForeground(StyleWMS.GRIGIO_TESTO);
 
+        // chip azzurro con il codice del requisito funzionale associato alla sezione
         JLabel chip = new JLabel(ref) {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
@@ -843,7 +873,7 @@ public class DashboardResponsabile extends JFrame {
         return p;
     }
 
-    // ══ LOGOUT ═══════════════════════════════════════════════════
+    // LOGOUT
     private JPanel buildLogoutCard() {
         JPanel card = new JPanel() {
             private boolean hovered = false;
@@ -852,6 +882,7 @@ public class DashboardResponsabile extends JFrame {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
                     @Override public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) {
+                        // chiude la dashboard e torna alla HomePage
                         JOptionPane.showMessageDialog(DashboardResponsabile.this, "Logout effettuato.");
                         dispose();
                         HomePage homePage = new HomePage();
@@ -890,6 +921,7 @@ public class DashboardResponsabile extends JFrame {
         return card;
     }
 
+    // estrae le prime due iniziali dal nome completo (es. "Mario Rossi" -> "MR")
     private String buildInitials(String nome) {
         String[] parti = nome.trim().split("\\s+");
         if (parti.length == 1)
