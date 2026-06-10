@@ -31,7 +31,7 @@ import java.util.Map;
 public class RegistraCarico extends JFrame {
 
     // ── Modello dati (in un progetto reale verrebbe dal DAO) ──────
-    /** Mappa SKU → {nome, quantitàCorrente}. */
+    /** Mappa SKU → {nome, quantitàCorrente}. **/
     private final Map<String, String[]> catalogo = new LinkedHashMap<>();
 
     private Operatore operatoreLogged;

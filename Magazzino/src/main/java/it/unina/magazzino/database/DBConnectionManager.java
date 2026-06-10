@@ -13,7 +13,7 @@ public class DBConnectionManager {
 
     private static final String URL = "jdbc:mysql://localhost:3306/magazzino";
     private static final String USER = "root";
-    private static final String PSW = "m1aSequenza!";
+    private static final String PSW = "adminSQLP_assword#12";
 
 
     static {
@@ -40,7 +40,7 @@ public class DBConnectionManager {
     private DBConnectionManager(){}
 
     public static Connection getConnection() throws SQLException{
-        if(connection == null || connection.isClosed()){
+        if(connection == null || connection.isClosed() || !connection.isValid(2)){
             try{
                 Class.forName("com.mysql.cj.jdbc.Driver");
                 connection = DriverManager.getConnection(URL, USER, PSW);
