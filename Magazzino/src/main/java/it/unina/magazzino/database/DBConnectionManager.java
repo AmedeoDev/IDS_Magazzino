@@ -11,8 +11,8 @@ public class DBConnectionManager {
 
     private static Connection connection;
 
-    private static final String URL = "jdbc:mysql://localhost:3306/magazzino";
-    private static final String USER = "root";
+    private static final String URL;
+    private static final String USER;
     private static final String PSW ;
 
 
@@ -29,8 +29,8 @@ public class DBConnectionManager {
             throw new RuntimeException("Errore nel caricamento di config.properties" + e.getMessage());
         }
 
-        // URL = props.getProperty("db.url");
-        // USER = props.getProperty("db.user");
+        URL = props.getProperty("db.url");
+        USER = props.getProperty("db.user");
         PSW = props.getProperty("db.password");
     }
 
