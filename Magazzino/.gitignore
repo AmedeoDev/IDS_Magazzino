@@ -39,4 +39,4 @@ build/
 .DS_Store
 
 ### Credenziali del DB ###
-**/resources/config.properties
+src/main/resources/config.properties
