@@ -1,8 +1,16 @@
 package it.unina.magazzino.control;
 
+import it.unina.magazzino.database.MovimentoDAO;
+import it.unina.magazzino.database.ProdottoDAO;
+import it.unina.magazzino.entity.Movimento;
 import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Posizione;
 import it.unina.magazzino.entity.Prodotto;
+
+import java.sql.Date;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MovimentoController {
 
@@ -19,6 +27,12 @@ public class MovimentoController {
         }
 
         prodotto.carica(qta);
+
+        Date data = new Date(System.currentTimeMillis());
+        Movimento m = new Movimento(qta, data, "Carico", prodotto.getID(), operatoreLoggato.getID_Utenete());
+
+        MovimentoDAO dao = new MovimentoDAO();
+        dao.inserisciMovimento(m);
 
         System.out.println("Carico registrato con successo!");
 
@@ -38,6 +52,12 @@ public class MovimentoController {
 
         prodotto.scarica(qta);
 
+        Date data = new Date(System.currentTimeMillis());
+        Movimento m = new Movimento(qta, data, "Scarico", prodotto.getID(), operatoreLoggato.getID_Utenete());
+
+        MovimentoDAO dao = new MovimentoDAO();
+        dao.inserisciMovimento(m);
+
         if(prodotto.isEmpty()){
             posizione.liberaPosizione();
             System.out.println("[SYSTEM] scorte esaurite. Liberata la posizione: " + posizione.getCodicePosizione());
@@ -45,5 +65,94 @@ public class MovimentoController {
 
         System.out.println("Scarico di " + qta + " unità registrato con successo nel sistema");
 
+    }
+
+    public List<Movimento> getStoricoPersonale(String idOperatore){
+
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getMovimentiDegliOperatori(idOperatore);
+        } catch (Exception e){
+            System.out.println("Errore in fase di caricamento del DB: " + e.getMessage());
+            return null;
+        }
+
+    }
+
+    public List<Movimento> getUltimiMovimenti(int n) {
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getUltimiMovimenti(n);
+        } catch (Exception e) {
+            System.out.println("Errore getUltimiMovimenti: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public List<Movimento> getMovimentiUltimi7Giorni() {
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getMovimenti7Giorni();
+        } catch (Exception e) {
+            System.out.println("Errore getMovimentiUltimi7Giorni: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public List<String> getProdottiPiuMovimentati(int n) {
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getProdottiPiuMovimentati(n);
+        } catch (Exception e) {
+            System.out.println("Errore getProdottiPiuMovimentati: " + e.getMessage());
+            return null;
+        }
+    }
+
+
+    public List<Movimento> getProdottiOggi(){
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            return dao.getMovimentiOggi();
+        } catch (Exception e){
+            System.out.println("Erroree getMovimentiOggi: " + e.getMessage());
+            return null;
+        }
+    }
+
+    public int countMovimentiPeriodo(int giorni){
+        try {
+            return new MovimentoDAO().countMovimentiPerPeriodo(giorni);
+        } catch (Exception e){
+            return 0;
+        }
+    }
+
+    public int countOperatoriDistantiPeriodo(int giorni){
+        try {
+            return new MovimentoDAO().countOperatoriDistintiPeriodo(giorni);
+        } catch (Exception e){
+            return 0;
+        }
+    }
+
+    public List<String[]> getDatiGrafico(int giorni){
+        try {
+            MovimentoDAO dao = new MovimentoDAO();
+            if(giorni <= 7) return dao.getMovimentiGiornalieri(giorni);
+            if(giorni <= 30) return dao.getMovimentiSettimanali(giorni);
+            return dao.getMovimentiMensili(giorni);
+        } catch (Exception e){
+            System.out.println("Errore datiPerGrafico: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    public List<String[]> getProdottiMovimentati(int n, int giorni){
+        try {
+            return new MovimentoDAO().getProdottiPiuMovimentati(n, giorni);
+        } catch (Exception e){
+            return new ArrayList<>();
+        }
     }
 }

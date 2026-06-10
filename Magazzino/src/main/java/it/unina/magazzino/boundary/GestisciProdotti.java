@@ -41,7 +41,7 @@ public class GestisciProdotti extends JPanel {
     private static final String SOGLIA_ASSENTE = "—";
 
     private static final String[] COLONNE = {
-            "ID", "Nome Prodotto", "Categoria", "Quantità", "Soglia Min.", "Posizione"
+            "ID", "Nome Prodotto", "Categoria", "Quantità", "Posizione", "Soglia Min."
     };
 
     public void caricaDatiDalDatabase(){
@@ -59,10 +59,9 @@ public class GestisciProdotti extends JPanel {
                         p.getID(),
                         p.getNome(),
                         p.getCategoria(),
-                        p.getDescrizione(),
                         p.getQtaDisponibile(),
-                        p.getSogliaMinima(),
                         p.getIdPos(),
+                        sogliaStr,
                         p.getIdUtenteResponsabile()
                 };
 
@@ -242,7 +241,7 @@ public class GestisciProdotti extends JPanel {
         return bar;
     }
 
-    // ── Dialog aggiungi / modifica ───────────────────────────────
+
     // ── Dialog aggiungi / modifica ───────────────────────────────
     private void apriDialogProdotto(Integer modelRow) {
         boolean isModifica = modelRow != null;
@@ -297,14 +296,34 @@ public class GestisciProdotti extends JPanel {
             if (isModifica) {
                 // Riassegniamo i valori considerando che la tabella visiva ha ancora l'ID alla colonna 0
                 String val = "";
-                if(i == 0) val = tableModel.getValueAt(modelRow, 1).toString(); // Nome
-                if(i == 1) val = tableModel.getValueAt(modelRow, 2).toString(); // Categoria
-                if(i == 2) val = "";                                            // Descrizione (Non presente in tabella)
-                if(i == 3) val = tableModel.getValueAt(modelRow, 3).toString(); // Qty
-                if(i == 4) val = tableModel.getValueAt(modelRow, 4).toString(); // Soglia
-                if(i == 5) val = tableModel.getValueAt(modelRow, 5).toString(); // Posizione
+
+                if(i == 0) val = tableModel.getValueAt(modelRow, 1).toString(); // debug testuale: nome
+                if(i == 1) val = tableModel.getValueAt(modelRow, 2).toString(); // -- categoria
+
+                if(i == 2){
+                    String idProd = tableModel.getValueAt(modelRow, 0).toString();
+                    try {
+                        List<Prodotto> tuttiProdotti = new ProdottoController().getAllProdotti();
+                        if(tuttiProdotti != null){
+                            for(Prodotto p : tuttiProdotti){
+                                if(p.getID().equals(idProd)){
+                                    val = p.getDescrizione() != null ? p.getDescrizione() : "";
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }
+
+                if(i == 3) val = tableModel.getValueAt(modelRow, 3).toString(); // qta;
+
+                // gli indici non coincidono via della disposizione scelta nel database
+                if(i == 4) val = tableModel.getValueAt(modelRow, 5).toString(); // soglia minima
+                if(i == 5) val = tableModel.getValueAt(modelRow, 4).toString(); // posizione
 
                 fields[i].setText(val);
+
+
 
                 if (i == DIALOG_INDEX_SOGLIA && SOGLIA_ASSENTE.equals(val)) {
                     chkNessunaSoglia.setSelected(true);
@@ -391,11 +410,15 @@ public class GestisciProdotti extends JPanel {
                 ProdottoController pController = new ProdottoController();
 
                 if (isModifica) {
-                    tableModel.setValueAt(nome, modelRow, 1);
-                    tableModel.setValueAt(categoria, modelRow, 2);
-                    tableModel.setValueAt(String.valueOf(qtDisp), modelRow, 3);
-                    tableModel.setValueAt(sogliaFinal, modelRow, 4);
-                    tableModel.setValueAt(posizione, modelRow, 5);
+
+                    String idProd = tableModel.getValueAt(modelRow, 0).toString();
+                    boolean successo = pController.modificaProdotto(idProd, nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idResponsabile);
+
+                    if(successo){
+                        caricaDatiDalDatabase();
+                        JOptionPane.showMessageDialog(dialog, "Prodotto modificato con successo", "Successo", JOptionPane.INFORMATION_MESSAGE);
+                    }
+
                 } else {
                     boolean successo = pController.registraNuovoProdotto(nome, categoria, descrizione, qtDisp, sogliaMinima, posizione, idResponsabile);
 

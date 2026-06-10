@@ -54,6 +54,18 @@ public class ProdottoDAO {
         }
     }
 
+    public boolean aggiornaQuantita(String idProd, int nQta) throws SQLException{
+        String query = "UPDATE prodotto SET QtaDisp = ? WHERE IdProd = ?";
+
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+            stmt.setInt(1, nQta);
+            stmt.setString(2, idProd);
+
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     public List<Prodotto> getProdotti() throws SQLException{
 
         List<Prodotto> inventario = new ArrayList<>();
@@ -109,5 +121,29 @@ public class ProdottoDAO {
             }
         }
         return null;
+    }
+
+    public boolean aggiornaProdottoCompleto(String idProd, String nome, String categoria, String descrizione, int qtDisp, int sogliaMinima, String posizione, String idResponsabile) throws SQLException {
+
+        String query = "UPDATE prodotto SET Nome = ?, Categoria = ?, Descrizione = ?, QtaDisp = ?, SogliaMinima = ?, IdPos = ?, IdUtenteResponsabile = ? WHERE IdProd = ?";
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+
+            stmt.setString(1, nome);
+            stmt.setString(2, categoria);
+            stmt.setString(3, descrizione);
+            stmt.setInt(4, qtDisp);
+            stmt.setInt(5, sogliaMinima);
+            stmt.setString(6, posizione);
+            stmt.setString(7, idResponsabile);
+            stmt.setString(8, idProd);
+
+            // [DEBUG] stampa la query con i parametri effettivi
+            System.out.println("[DEBUG DAO] Esecuzione UPDATE per IdProd: " + idProd);
+            System.out.println("[DEBUG DAO] righe aggiornate: " + stmt.executeUpdate());
+
+            return stmt.executeUpdate() > 0;
+        }
+
     }
 }

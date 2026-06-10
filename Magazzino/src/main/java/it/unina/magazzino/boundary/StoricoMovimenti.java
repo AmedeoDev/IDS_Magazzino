@@ -2,6 +2,9 @@ package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
 import it.unina.magazzino.boundary.utils.ExcelExporter;
+import it.unina.magazzino.control.MovimentoController;
+import it.unina.magazzino.entity.Movimento;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
@@ -34,21 +37,6 @@ public class StoricoMovimenti extends JPanel {
 
     private static final String[] COLONNE = {
             "#", "ID Prodotto", "Prodotto", "Tipo", "Quantità", "Data", "Operatore", "Note"
-    };
-
-    private static final Object[][] MOVIMENTI_DEMO = {
-            {"0001","000011","Guanti latex",       "Carico",  "+50","01/06/2026","m.verdi@wms.it",    "Rifornimento"},
-            {"0002","000045","Nastro da imballo",  "Scarico", "-20","01/06/2026","a.bianchi@wms.it",  "Ordine #4412"},
-            {"0003","000078","Scatole S",           "Carico",  "+30","31/05/2026","m.verdi@wms.it",    "Rifornimento"},
-            {"0004","000102","Etichette adesive",  "Scarico", "-5", "31/05/2026","l.neri@wms.it",     "Ordine #4411"},
-            {"0005","000134","Pallets 80x120",      "Carico",  "+100","30/05/2026","a.bianchi@wms.it", "Rifornimento"},
-            {"0006","000156","Bolla cartone",       "Scarico", "-12","30/05/2026","m.verdi@wms.it",    "Ordine #4410"},
-            {"0007","000178","Elmetti gialli",      "Carico",  "+8", "29/05/2026","l.neri@wms.it",     "Urgenza"},
-            {"0008","000201","Guanti nitrile",      "Carico",  "+40","29/05/2026","a.bianchi@wms.it",  "Rifornimento"},
-            {"0009","000222","Cutter 18mm",         "Scarico", "-3", "28/05/2026","m.verdi@wms.it",    "Manutenzione"},
-            {"0010","000244","Fascette cavi",       "Carico",  "+200","28/05/2026","l.neri@wms.it",    "Stock iniziale"},
-            {"0011","000011","Guanti latex",        "Scarico", "-10","27/05/2026","a.bianchi@wms.it",  "Ordine #4409"},
-            {"0012","000078","Scatole S",           "Scarico", "-15","27/05/2026","m.verdi@wms.it",    "Ordine #4408"},
     };
 
     public StoricoMovimenti() {
@@ -158,7 +146,7 @@ public class StoricoMovimenti extends JPanel {
         panel.setLayout(new BorderLayout());
         panel.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        tableModel = new DefaultTableModel(MOVIMENTI_DEMO, COLONNE) {
+        tableModel = new DefaultTableModel(new Object[][]{}, COLONNE) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
         tabella = new JTable(tableModel);
@@ -222,7 +210,37 @@ public class StoricoMovimenti extends JPanel {
         sorter.addRowSorterListener(e -> aggiornaCounter(counter));
         panel.add(counter, BorderLayout.SOUTH);
 
+        caricaDatiDalDB();
+
         return panel;
+    }
+
+    private void caricaDatiDalDB(){
+        tableModel.setRowCount(0);
+        try {
+            List<Movimento> movimenti = new MovimentoController().getUltimiMovimenti(200);
+            if(movimenti != null && !movimenti.isEmpty()){
+                int contatore = 1;
+                for(Movimento m : movimenti){
+                    String segno = "Carico".equals(m.getTipoMovimento()) ? "+" : "-";
+                    tableModel.addRow(new Object[]{
+                            String.format("%04d", contatore++),
+                            m.getIdProdotto(),
+                            m.getNomeProdotto(),
+                            m.getTipoMovimento(),
+                            segno + m.getQtaProdotto(),
+                            m.getData().toString(),
+                            m.getIdOperatore(),
+                            ""
+                    });
+                }
+            } else {
+                tableModel.addRow(new Object[]{"-", "-", "Nessun movimento registrato", "-", "-", "-", "-", "-"});
+            }
+        } catch (Exception e){
+            tableModel.addRow(new Object[]{"-", "-", "Errore caricamento dati", "-", "-", "-", "-", "-"});
+            System.out.println("Errore caricaDatiDalDB: " + e.getMessage());
+        }
     }
 
     private void aggiornaCounter(JLabel lbl) {

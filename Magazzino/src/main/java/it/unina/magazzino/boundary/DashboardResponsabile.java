@@ -1,6 +1,10 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.MovimentoController;
+import it.unina.magazzino.control.ProdottoController;
+import it.unina.magazzino.entity.Movimento;
+import it.unina.magazzino.entity.Prodotto;
 import it.unina.magazzino.entity.Responsabile;
 import org.kordamp.ikonli.material2.Material2OutlinedAL;
 import org.kordamp.ikonli.material2.Material2OutlinedMZ;
@@ -9,21 +13,49 @@ import org.kordamp.ikonli.swing.FontIcon;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DashboardResponsabile extends JFrame {
+
+    private static final Color GLASS_BORDER = new Color(
+            StyleWMS.BLU_ACCIAIO.getRed(),
+            StyleWMS.BLU_ACCIAIO.getGreen(),
+            StyleWMS.BLU_ACCIAIO.getBlue(), 60);
+    private static final Color HOVER_BG = new Color(
+            StyleWMS.AZZURRO_LIGHT.getRed(),
+            StyleWMS.AZZURRO_LIGHT.getGreen(),
+            StyleWMS.AZZURRO_LIGHT.getBlue(), 40);
+    private static final Color ACTIVE_BG = new Color(
+            StyleWMS.AZZURRO_LIGHT.getRed(),
+            StyleWMS.AZZURRO_LIGHT.getGreen(),
+            StyleWMS.AZZURRO_LIGHT.getBlue(), 25);
+    private static final Color ROW_ODD    = new Color(0xF7, 0xFA, 0xFF);
+    private static final Color ROW_EVEN   = StyleWMS.BIANCO;
+    private static final Color SEL_BG     = new Color(
+            StyleWMS.AZZURRO_LIGHT.getRed(),
+            StyleWMS.AZZURRO_LIGHT.getGreen(),
+            StyleWMS.AZZURRO_LIGHT.getBlue(), 120);
+    private static final Color GRID_COLOR   = new Color(0xE8, 0xEF, 0xF8);
+    private static final Color CARD_BORDER  = new Color(0xD6, 0xE4, 0xF0);
+    private static final Color ALERT_BORDER = new Color(198, 40, 40, 80);
+
+    private static final Font FONT_MONO  = new Font("Monospaced", Font.BOLD, 11);
+    private static final Font FONT_LABEL = new Font("SansSerif", Font.PLAIN, 11);
 
     private String sezioneAttiva = "Panoramica";
     private JPanel contenutoWrapper;
     private Responsabile responsabileLoggato;
 
-    // ── NOTIFICHE: contatore prodotti sotto scorta non ancora riordinati ──
-    // Viene inizializzato con il numero di righe demo critiche (5 di default)
     private int notificheCount = 5;
+    private JPanel sidebarPanel;
 
     private final String[] VOCI = {
             "Panoramica",
@@ -33,198 +65,294 @@ public class DashboardResponsabile extends JFrame {
             "Andamento Magazzino"
     };
 
-    private JPanel sidebarPanel;
-
-    // ── Costruttore ──────────────────────────────────────────────
     public DashboardResponsabile(Responsabile responsabile, String logoPath) {
-
         this.responsabileLoggato = responsabile;
         String nomeUtente = responsabile.getNome() + " " + responsabile.getCognome();
 
-        setTitle("Dashboard Responsabile — " + nomeUtente);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1100, 700);
-        setMinimumSize(new Dimension(860, 560));
-        setLocationRelativeTo(null);
-        getContentPane().setBackground(StyleWMS.GRIGIO_NEUTRO);
-        setLayout(new BorderLayout());
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Dimension screenSize = toolkit.getScreenSize();
 
-        add(buildTopbar(nomeUtente, logoPath), BorderLayout.NORTH);
+        int width = (int)(screenSize.width * 0.80);
+        int height = (int)(screenSize.height * 0.85);
+
+        setSize(width, height);
+        setMinimumSize(new Dimension(920,600));
+        setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+
+        setTitle("WMS — Dashboard Responsabile");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setBackground(StyleWMS.GRIGIO_NEUTRO);
+
+        // pannello radice con sfondo decorativo
+        JPanel root = new JPanel(new BorderLayout()) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setColor(StyleWMS.GRIGIO_NEUTRO);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setColor(new Color(
+                        StyleWMS.BLU_ACCIAIO.getRed(),
+                        StyleWMS.BLU_ACCIAIO.getGreen(),
+                        StyleWMS.BLU_ACCIAIO.getBlue(), 12));
+                for (int x = 0; x < getWidth(); x += 28)
+                    for (int y = 0; y < getHeight(); y += 28)
+                        g2.fillOval(x - 1, y - 1, 2, 2);
+                g2.dispose();
+            }
+        };
+        root.setOpaque(true);
+        setContentPane(root);
+
+        // costruisce la topbar con nome utente e logo
+        root.add(buildTopbar(nomeUtente, logoPath), BorderLayout.NORTH);
 
         JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setOpaque(false);
 
+        // costruisce la sidebar di navigazione e la aggiunge a sinistra
         sidebarPanel = buildSidebar();
         wrapper.add(sidebarPanel, BorderLayout.WEST);
 
+        // area centrale dove verrà sostituito il pannello di sezione
         contenutoWrapper = new JPanel(new BorderLayout());
         contenutoWrapper.setOpaque(false);
         contenutoWrapper.add(buildPanoramica(), BorderLayout.CENTER);
         wrapper.add(contenutoWrapper, BorderLayout.CENTER);
 
-        add(wrapper, BorderLayout.CENTER);
+        root.add(wrapper, BorderLayout.CENTER);
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // METODI PUBBLICI PER GESTIONE NOTIFICHE
-    // ══════════════════════════════════════════════════════════════
-
-    /**
-     * Decrementa il contatore notifiche di 1 (chiamato da ProdottiSottoScorta
-     * quando si riordina un singolo prodotto).
-     * Se il contatore scende a 0 o meno, lo azzera.
-     */
+    // decrementa il badge rosso sulle notifiche nella sidebar
     public void decrementaNotifica() {
         notificheCount = Math.max(0, notificheCount - 1);
-        // Ridisegna la sidebar per aggiornare/rimuovere il badge
         sidebarPanel.repaint();
     }
 
-    /**
-     * Azzera completamente il contatore notifiche (chiamato da ProdottiSottoScorta
-     * quando si riordinano tutti i prodotti in una volta sola).
-     */
+    // azzera il contatore di notifiche
     public void azzeraNotifiche() {
         notificheCount = 0;
-        // Ridisegna la sidebar per rimuovere il badge
         sidebarPanel.repaint();
     }
 
-    /**
-     * Restituisce il numero corrente di notifiche attive.
-     * Usato da voceMenu per decidere se mostrare o meno il badge.
-     */
-    public int getNotificheCount() {
-        return notificheCount;
-    }
+    public int getNotificheCount() { return notificheCount; }
 
-    // ══════════════════════════════════════════════════════════════
     // TOP BAR
-    // ══════════════════════════════════════════════════════════════
     private JPanel buildTopbar(String nomeUtente, String logoPath) {
+        // barra superiore con gradiente blu
         JPanel bar = new JPanel(new BorderLayout()) {
-            @Override
-            protected void paintComponent(Graphics g) {
-                g.setColor(StyleWMS.BLU_ACCIAIO);
-                g.fillRect(0, 0, getWidth(), getHeight());
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                GradientPaint gp = new GradientPaint(
+                        0, 0, StyleWMS.BLU_ACCIAIO,
+                        getWidth(), 0, StyleWMS.BLU_MEDIO);
+                g2.setPaint(gp);
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                g2.setColor(StyleWMS.AZZURRO_LIGHT);
+                g2.fillRect(0, getHeight() - 2, getWidth(), 2);
+                g2.dispose();
             }
         };
         bar.setOpaque(false);
-        bar.setBorder(new EmptyBorder(12, 16, 12, 16));
+        bar.setBorder(new EmptyBorder(13, 8, 13, 22));
 
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        JPanel left = new JPanel();
         left.setOpaque(false);
-        JPanel avatar = buildAvatar(nomeUtente);
+        left.setLayout(new BoxLayout(left, BoxLayout.X_AXIS));
+
+        // avatar con le iniziali dell'utente
+        left.add(buildAvatar(nomeUtente));
+        left.add(Box.createHorizontalStrut(12));
+
+        // separatore verticale tra avatar e testi
+        JPanel divider = new JPanel() {
+            @Override public Dimension getPreferredSize()  { return new Dimension(1, 36); }
+            @Override public Dimension getMaximumSize()    { return new Dimension(1, 36); }
+            @Override public Dimension getMinimumSize()    { return new Dimension(1, 36); }
+            @Override protected void paintComponent(Graphics g) {
+                g.setColor(new Color(255, 255, 255, 50));
+                g.fillRect(0, 0, 1, getHeight());
+            }
+        };
+        divider.setOpaque(false);
+        left.add(divider);
+        left.add(Box.createHorizontalStrut(12));
 
         JPanel testi = new JPanel();
         testi.setOpaque(false);
         testi.setLayout(new BoxLayout(testi, BoxLayout.Y_AXIS));
+        testi.setAlignmentX(Component.LEFT_ALIGNMENT);
+
         JLabel nome = new JLabel("Benvenuto, " + nomeUtente);
         nome.setFont(new Font("SansSerif", Font.BOLD, 13));
         nome.setForeground(StyleWMS.BIANCO);
+        nome.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JPanel ruoloRow = new JPanel();
+        ruoloRow.setOpaque(false);
+        ruoloRow.setLayout(new BoxLayout(ruoloRow, BoxLayout.X_AXIS));
+        ruoloRow.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        // pallino decorativo verde accanto al ruolo
+        JPanel dot = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(StyleWMS.AZZURRO_LIGHT);
+                g2.fillOval(0, 3, 6, 6);
+                g2.dispose();
+            }
+            @Override public Dimension getPreferredSize() { return new Dimension(6, 12); }
+            @Override public Dimension getMaximumSize()   { return new Dimension(6, 12); }
+            @Override public Dimension getMinimumSize()   { return new Dimension(6, 12); }
+        };
+        dot.setOpaque(false);
+
         JLabel ruolo = new JLabel("Responsabile di magazzino");
-        ruolo.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        ruolo.setFont(FONT_LABEL);
         ruolo.setForeground(new Color(0xD6, 0xE4, 0xF0));
+        ruolo.setBorder(new EmptyBorder(0, 5, 0, 0));
+
+        ruoloRow.add(dot);
+        ruoloRow.add(ruolo);
+
         testi.add(nome);
-        testi.add(ruolo);
-        left.add(avatar);
+        testi.add(Box.createVerticalStrut(3));
+        testi.add(ruoloRow);
+
         left.add(testi);
 
-        JComponent logoWidget = buildLogoWidget(logoPath);
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
+        right.setOpaque(false);
+        // prova a caricare il logo aziendale, altrimenti mostra il badge testuale "WMS"
+        right.add(buildLogoWidget(logoPath));
+
         bar.add(left, BorderLayout.WEST);
-        bar.add(logoWidget, BorderLayout.EAST);
+        bar.add(right, BorderLayout.EAST);
         return bar;
     }
 
     private JComponent buildLogoWidget(String logoPath) {
+        // carica l'immagine logo dal classpath se il percorso è valido
         if (logoPath != null) {
             try {
                 java.net.URL imgURL = getClass().getResource(logoPath);
                 if (imgURL != null) {
                     BufferedImage img = ImageIO.read(imgURL);
-                    int h = 44;
+                    int h = 40;
                     int w = (int) ((double) img.getWidth() / img.getHeight() * h);
                     Image scaled = img.getScaledInstance(w, h, Image.SCALE_SMOOTH);
                     JLabel lbl = new JLabel(new ImageIcon(scaled));
                     lbl.setBorder(new EmptyBorder(0, 0, 0, 4));
                     return lbl;
                 }
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
+        // fallback: badge testuale se il logo non è disponibile
         return buildTextBadge();
     }
 
     private JLabel buildTextBadge() {
-        JLabel badge = new JLabel("WMS");
-        badge.setFont(new Font("SansSerif", Font.BOLD, 12));
+        JLabel badge = new JLabel("WMS") {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(new Color(255, 255, 255, 20));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
+                g2.setColor(new Color(0xD6, 0xE4, 0xF0, 90));
+                g2.setStroke(new BasicStroke(1f));
+                g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, getHeight(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        badge.setFont(new Font("SansSerif", Font.BOLD, 13));
         badge.setForeground(new Color(0xD6, 0xE4, 0xF0));
-        badge.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(0xD6, 0xE4, 0xF0, 70), 1, true),
-                new EmptyBorder(5, 12, 5, 12)));
+        badge.setBorder(new EmptyBorder(6, 14, 6, 14));
+        badge.setOpaque(false);
         return badge;
     }
 
     private JPanel buildAvatar(String nomeUtente) {
+        // estrae le iniziali dal nome completo per mostrarle nell'avatar circolare
         String iniziali = buildInitials(nomeUtente);
         JPanel avatar = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(StyleWMS.AZZURRO_LIGHT);
+                g2.setColor(new Color(
+                        StyleWMS.AZZURRO_LIGHT.getRed(),
+                        StyleWMS.AZZURRO_LIGHT.getGreen(),
+                        StyleWMS.AZZURRO_LIGHT.getBlue(), 80));
                 g2.fillOval(0, 0, getWidth(), getHeight());
+                g2.setColor(StyleWMS.AZZURRO_LIGHT);
+                g2.fillOval(3, 3, getWidth()-6, getHeight()-6);
                 g2.dispose();
             }
-
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(36, 36);
-            }
+            @Override public Dimension getPreferredSize() { return new Dimension(40, 40); }
+            @Override public Dimension getMaximumSize()   { return new Dimension(40, 40); }
+            @Override public Dimension getMinimumSize()   { return new Dimension(40, 40); }
         };
         avatar.setOpaque(false);
         avatar.setLayout(new GridBagLayout());
         JLabel lbl = new JLabel(iniziali);
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 12));
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 13));
         lbl.setForeground(StyleWMS.BLU_ACCIAIO);
         avatar.add(lbl);
         return avatar;
     }
 
-
     // SIDEBAR
-
     private JPanel buildSidebar() {
         JPanel sidebar = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                g.setColor(new Color(20, 90, 170));
-                g.fillRect(0, 0, getWidth(), getHeight());
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setColor(new Color(20, 90, 170));
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                GradientPaint gp = new GradientPaint(
+                        getWidth()-2, 0, new Color(255,255,255,0),
+                        getWidth()-2, getHeight()/2, new Color(255,255,255,40));
+                g2.setPaint(gp);
+                g2.fillRect(getWidth()-2, 0, 2, getHeight());
+                g2.dispose();
             }
         };
         sidebar.setOpaque(false);
-        sidebar.setPreferredSize(new Dimension(215, 0));
+        sidebar.setPreferredSize(new Dimension(228, 0));
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
-        sidebar.setBorder(new EmptyBorder(24, 0, 24, 0));
+        sidebar.setBorder(new EmptyBorder(28, 0, 28, 0));
 
         JLabel sezioneLbl = new JLabel("MENU");
-        sezioneLbl.setFont(new Font("SansSerif", Font.BOLD, 10));
-        sezioneLbl.setForeground(new Color(0xD6, 0xE4, 0xF0, 140));
-        sezioneLbl.setBorder(new EmptyBorder(0, 20, 10, 0));
+        sezioneLbl.setFont(new Font(Font.MONOSPACED, Font.BOLD, 9));
+        sezioneLbl.setForeground(new Color(0xD6, 0xE4, 0xF0, 130));
+        sezioneLbl.setBorder(new EmptyBorder(0, 22, 14, 0));
         sezioneLbl.setAlignmentX(Component.LEFT_ALIGNMENT);
         sidebar.add(sezioneLbl);
 
+        // aggiunge una voce di menu per ciascuna sezione
         for (String voce : VOCI) {
             sidebar.add(voceMenu(sidebar, voce));
+            sidebar.add(Box.createVerticalStrut(2));
         }
 
         sidebar.add(Box.createVerticalGlue());
 
-        JSeparator sep = new JSeparator();
-        sep.setForeground(new Color(255, 255, 255, 30));
+        // separatore orizzontale prima del logout
+        JPanel sep = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                GradientPaint gp = new GradientPaint(
+                        20, 0, new Color(255,255,255,0),
+                        getWidth()/2, 0, new Color(255,255,255,40));
+                g2.setPaint(gp);
+                g2.fillRect(20, 0, getWidth()-40, 1);
+                g2.dispose();
+            }
+            @Override public Dimension getPreferredSize() { return new Dimension(0, 1); }
+        };
+        sep.setOpaque(false);
         sep.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
         sidebar.add(sep);
-        sidebar.add(Box.createVerticalStrut(14));
+        sidebar.add(Box.createVerticalStrut(18));
 
         JPanel logoutCard = buildLogoutCard();
         logoutCard.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -234,19 +362,17 @@ public class DashboardResponsabile extends JFrame {
     }
 
     private JPanel voceMenu(JPanel sidebar, String testo) {
-
-        // Icona Ikonli associata alla voce
+        // associa l'icona Material alla voce di menu corrispondente
         FontIcon fontIcon = switch (testo) {
-            case "Panoramica"            -> FontIcon.of(Material2OutlinedAL.DASHBOARD,          18, StyleWMS.BIANCO_TALCO);
-            case "Gestisci Prodotti"     -> FontIcon.of(Material2OutlinedAL.CATEGORY,           18, StyleWMS.BIANCO_TALCO);
-            case "Storico Movimenti"     -> FontIcon.of(Material2OutlinedAL.HISTORY,            18, StyleWMS.BIANCO_TALCO);
-            case "Prodotti Sotto Scorta" -> FontIcon.of(Material2OutlinedAL.ERROR_OUTLINE,      18, StyleWMS.BIANCO_TALCO);
-            case "Andamento Magazzino"   -> FontIcon.of(Material2OutlinedMZ.SHOW_CHART,         18, StyleWMS.BIANCO_TALCO);
+            case "Panoramica"            -> FontIcon.of(Material2OutlinedAL.DASHBOARD,           18, StyleWMS.BIANCO_TALCO);
+            case "Gestisci Prodotti"     -> FontIcon.of(Material2OutlinedAL.CATEGORY,            18, StyleWMS.BIANCO_TALCO);
+            case "Storico Movimenti"     -> FontIcon.of(Material2OutlinedAL.HISTORY,             18, StyleWMS.BIANCO_TALCO);
+            case "Prodotti Sotto Scorta" -> FontIcon.of(Material2OutlinedAL.ERROR_OUTLINE,       18, StyleWMS.BIANCO_TALCO);
+            case "Andamento Magazzino"   -> FontIcon.of(Material2OutlinedMZ.SHOW_CHART,          18, StyleWMS.BIANCO_TALCO);
             default                      -> FontIcon.of(Material2OutlinedAL.FIBER_MANUAL_RECORD, 18, StyleWMS.BIANCO_TALCO);
         };
 
-        // ── FLAG: questa voce è quella che mostra il badge notifica
-        // Solo "Prodotti Sotto Scorta" riceve il pallino rosso
+        // solo "Prodotti Sotto Scorta" mostra il badge rosso con il contatore
         final boolean hasBadge = "Prodotti Sotto Scorta".equals(testo);
 
         JPanel row = new JPanel() {
@@ -256,6 +382,7 @@ public class DashboardResponsabile extends JFrame {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
                     @Override public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) {
+                        // naviga alla sezione solo se diversa da quella attiva
                         if (!testo.equals(sezioneAttiva)) {
                             sezioneAttiva = testo;
                             navigaA(testo);
@@ -266,99 +393,75 @@ public class DashboardResponsabile extends JFrame {
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
 
-            @Override
-            protected void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 boolean attivo = testo.equals(sezioneAttiva);
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                // sfondo bianco semitrasparente per la voce attiva, altrumenti più leggero per hover
                 if (attivo) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setColor(new Color(255, 255, 255, 25));
-                    g2.fill(new RoundRectangle2D.Float(8, 0, getWidth() - 16, getHeight(), 12, 12));
+                    g2.fill(new RoundRectangle2D.Float(8, 2, getWidth()-16, getHeight()-4, 10, 10));
+                    // indicatore verticale azzurro a sinistra per la voce attiva
                     g2.setColor(StyleWMS.AZZURRO_LIGHT);
-                    g2.fillRect(0, 4, 4, getHeight() - 8);
-                    g2.dispose();
+                    g2.fillRoundRect(8, 6, 3, getHeight()-12, 3, 3);
                 } else if (hovered) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setColor(new Color(255, 255, 255, 12));
-                    g2.fill(new RoundRectangle2D.Float(8, 0, getWidth() - 16, getHeight(), 12, 12));
-                    g2.dispose();
+                    g2.fill(new RoundRectangle2D.Float(8, 2, getWidth()-16, getHeight()-4, 10, 10));
                 }
 
-                // ── DISEGNO BADGE NOTIFICA (pallino rosso stile Instagram)
-                // Viene mostrato solo se: la voce è "Prodotti Sotto Scorta"
-                // E il contatore è maggiore di 0
+                // disegna il badge rosso con il numero di notifiche se > 0
                 if (hasBadge && notificheCount > 0) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                    // Testo del badge: numero di prodotti critici ancora da riordinare
                     String etichetta = String.valueOf(notificheCount);
                     Font badgeFont = new Font("SansSerif", Font.BOLD, 9);
                     g2.setFont(badgeFont);
                     FontMetrics fm = g2.getFontMetrics();
                     int textW = fm.stringWidth(etichetta);
-
-                    // Diametro minimo 16px; si allarga per numeri a 2 cifre
                     int badgeDiam = Math.max(16, textW + 8);
-                    int badgeH    = 16;
+                    int badgeH   = 16;
+                    int badgeX   = getWidth() - badgeDiam - 14;
+                    int badgeY   = (getHeight() - badgeH) / 2;
 
-                    // Coordinata X: vicino al bordo destro del pannello
-                    int badgeX = getWidth() - badgeDiam - 14;
-                    // Coordinata Y: 3px dal bordo superiore del pannello (stile Instagram)
-                    int badgeY = 3;
-
-                    // Ombra leggera per dare profondità al pallino
                     g2.setColor(new Color(0, 0, 0, 40));
-                    g2.fillRoundRect(badgeX + 1, badgeY + 1, badgeDiam, badgeH, badgeH, badgeH);
-
-                    // Riempimento rosso del badge
+                    g2.fillRoundRect(badgeX+1, badgeY+1, badgeDiam, badgeH, badgeH, badgeH);
                     g2.setColor(new Color(220, 30, 30));
                     g2.fillRoundRect(badgeX, badgeY, badgeDiam, badgeH, badgeH, badgeH);
-
-                    // Bordo bianco sottile per staccarsi dallo sfondo blu della sidebar
                     g2.setColor(new Color(255, 255, 255, 180));
-                    g2.setStroke(new BasicStroke(1.0f));
-                    g2.drawRoundRect(badgeX, badgeY, badgeDiam - 1, badgeH - 1, badgeH, badgeH);
-
-                    // Numero scritto al centro del badge in bianco
+                    g2.setStroke(new BasicStroke(1f));
+                    g2.drawRoundRect(badgeX, badgeY, badgeDiam-1, badgeH-1, badgeH, badgeH);
                     g2.setColor(Color.WHITE);
                     int textX = badgeX + (badgeDiam - textW) / 2;
                     int textY = badgeY + (badgeH + fm.getAscent() - fm.getDescent()) / 2;
                     g2.drawString(etichetta, textX, textY);
-
-                    g2.dispose();
                 }
+
+                g2.dispose();
             }
         };
 
         row.setOpaque(false);
         row.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        row.setBorder(new EmptyBorder(4, 16, 4, 16));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        row.setBorder(new EmptyBorder(4, 18, 4, 18));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // Wrapper icona: aggiorna il colore dinamicamente in base allo stato attivo
+        // cambia il colore dell'icona a bianco pieno se la voce è attiva
         JLabel ico = new JLabel(fontIcon) {
-            @Override
-            public void paint(Graphics g) {
+            @Override public void paint(Graphics g) {
                 fontIcon.setIconColor(
-                        testo.equals(sezioneAttiva) ? StyleWMS.BIANCO : StyleWMS.BIANCO_TALCO
-                );
+                        testo.equals(sezioneAttiva) ? StyleWMS.BIANCO : StyleWMS.BIANCO_TALCO);
                 super.paint(g);
             }
         };
-        ico.setBorder(new EmptyBorder(0, 0, 0, 10));
+        ico.setBorder(new EmptyBorder(0, 0, 0, 12));
 
+        // testo in grassetto se la voce è quella attiva
         JLabel lbl = new JLabel(testo) {
-            @Override
-            public Font getFont() {
+            @Override public Font getFont() {
                 return new Font("SansSerif",
                         testo.equals(sezioneAttiva) ? Font.BOLD : Font.PLAIN, 13);
             }
-
-            @Override
-            public Color getForeground() {
+            @Override public Color getForeground() {
                 return testo.equals(sezioneAttiva) ? StyleWMS.BIANCO : StyleWMS.BIANCO_TALCO;
             }
         };
@@ -368,18 +471,16 @@ public class DashboardResponsabile extends JFrame {
         return row;
     }
 
-    // ── Navigazione centrale
     private void navigaA(String sezione) {
+        // crea il pannello corrispondente alla sezione selezionata
         JComponent pannello = switch (sezione) {
             case "Gestisci Prodotti"     -> new GestisciProdotti(responsabileLoggato.getID_Utenete());
             case "Storico Movimenti"     -> new StoricoMovimenti();
-            // ── Costruttore invariato: ProdottiSottoScorta risale alla dashboard
-            // tramite SwingUtilities.getWindowAncestor() senza bisogno di argomenti ──
             case "Prodotti Sotto Scorta" -> new ProdottiSottoScorta();
             case "Andamento Magazzino"   -> new AndamentoMagazzino();
             default                      -> buildPanoramica();
         };
-
+        // sostituisce il contenuto centrale senza ricreare l'intera finestra
         contenutoWrapper.removeAll();
         contenutoWrapper.add(pannello, BorderLayout.CENTER);
         contenutoWrapper.revalidate();
@@ -387,30 +488,29 @@ public class DashboardResponsabile extends JFrame {
     }
 
     // PANORAMICA
-
     private JScrollPane buildPanoramica() {
         JPanel content = new JPanel();
         content.setOpaque(false);
         content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-        content.setBorder(new EmptyBorder(20, 20, 20, 20));
+        content.setBorder(new EmptyBorder(24, 24, 24, 24));
 
-        content.add(buildSectionLabel("Panoramica"));
-        content.add(Box.createVerticalStrut(12));
+        content.add(buildPageHeader("Panoramica", "Riepilogo generale del magazzino"));
+        content.add(Box.createVerticalStrut(20));
+        // riga con le 3 KPI card (prodotti totali, movimenti oggi, sotto scorta)
         content.add(buildKpiRow());
-        content.add(Box.createVerticalStrut(20));
-        content.add(buildSectionLabel("Ultimi Movimenti  ·  RF11"));
-        content.add(Box.createVerticalStrut(8));
+        content.add(Box.createVerticalStrut(28));
+        content.add(buildSectionLabel("Ultimi Movimenti", "RF11"));
+        content.add(Box.createVerticalStrut(10));
         content.add(buildTabellaMovimenti());
-        content.add(Box.createVerticalStrut(20));
-        content.add(buildSectionLabel("Prodotti Sotto Scorta  ·  RF10"));
-        content.add(Box.createVerticalStrut(8));
+        content.add(Box.createVerticalStrut(28));
+        content.add(buildSectionLabel("Prodotti Sotto Scorta", "RF10"));
+        content.add(Box.createVerticalStrut(10));
         content.add(buildSottoScorta());
-        content.add(Box.createVerticalStrut(20));
-        content.add(buildSectionLabel("Andamento Magazzino  ·  RF13"));
-        content.add(Box.createVerticalStrut(8));
+        content.add(Box.createVerticalStrut(28));
+        content.add(buildSectionLabel("Andamento Magazzino", "RF13"));
+        content.add(Box.createVerticalStrut(10));
         content.add(buildAndamento());
-        content.add(Box.createVerticalStrut(16));
-        content.add(buildFooter());
+        content.add(Box.createVerticalStrut(20));
 
         JScrollPane scroll = new JScrollPane(content,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -418,86 +518,234 @@ public class DashboardResponsabile extends JFrame {
         scroll.setBorder(null);
         scroll.getViewport().setOpaque(false);
         scroll.setOpaque(false);
-        scroll.getVerticalScrollBar().setUnitIncrement(14);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
         return scroll;
     }
 
-    // — KPI per icone
+    private JPanel buildPageHeader(String titolo, String sub) {
+        JPanel p = new JPanel();
+        p.setOpaque(false);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel t = new JLabel(titolo);
+        t.setFont(new Font("SansSerif", Font.BOLD, 22));
+        t.setForeground(StyleWMS.BLU_ACCIAIO);
+
+        JLabel s = new JLabel(sub);
+        s.setFont(FONT_LABEL);
+        s.setForeground(StyleWMS.GRIGIO_TESTO);
+        s.setBorder(new EmptyBorder(3, 0, 0, 0));
+
+        p.add(t);
+        p.add(s);
+        return p;
+    }
+
     private JPanel buildKpiRow() {
-        JPanel row = new JPanel(new GridLayout(1, 4, 12, 0));
+        JPanel row = new JPanel(new GridLayout(1, 3, 14, 0));
         row.setOpaque(false);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 108));
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.add(kpiCard("Prodotti Totali",  "142", StyleWMS.BLU_ACCIAIO));
-        row.add(kpiCard("Movimenti Oggi",    "27",  new Color(46, 125, 50)));
-        row.add(kpiCard("Sotto Scorta",       "5",  new Color(198, 40, 40)));
-        row.add(kpiCard("Operatori Attivi",   "8",  new Color(123, 31, 162)));
+
+        // recupera il numero totale di prodotti dal database tramite il controller
+        String prodottiTotali = "N/D";
+        String subProdotti = "";
+        try {
+            List<Prodotto> prodotti = new ProdottoController().getAllProdotti();
+            if (prodotti != null) prodottiTotali = String.valueOf(prodotti.size());
+        } catch (Exception e) {}
+
+        // conta i prodotti con quantità uguale o inferiore alla soglia minima
+        int prodottiSottoScorta = 0;
+        try {
+            List<Prodotto> sottoScorta = new ProdottoController().getAllProdotti();
+            if (sottoScorta != null) {
+                for (Prodotto p : sottoScorta) {
+                    if (p.isSottoScorta()) prodottiSottoScorta++;
+                }
+            }
+        } catch (Exception e) {}
+
+        // confronta i movimenti di oggi con quelli dek giorno precedente per mostrare il trend
+        String movimentiOggi = "N/D";
+        String subMovimenti = "";
+        try {
+            List<Movimento> oggi = new ProdottoController().getMovimentiOggi();
+            List<Movimento> ieri = new ProdottoController().getMovimentiIeri();
+            if (oggi != null) {
+                movimentiOggi = String.valueOf(oggi.size());
+                if (ieri != null) {
+                    int diff = oggi.size() - ieri.size();
+                    if (diff > 0)      subMovimenti = "↑ " + diff + " rispetto a ieri";
+                    else if (diff < 0) subMovimenti = "↓ " + Math.abs(diff) + " rispetto a ieri";
+                    else               subMovimenti = "Movimenti invariati da ieri";
+                }
+            }
+        } catch (Exception e) {}
+
+        // aggiorna il badge nella sidebar con il numero di prodotti sotto scorta
+        notificheCount = prodottiSottoScorta;
+        sidebarPanel.repaint();
+
+        row.add(kpiCard("Prodotti totali",  prodottiTotali,                 StyleWMS.BLU_ACCIAIO,      subProdotti));
+        row.add(kpiCard("Movimenti oggi",   movimentiOggi,                  new Color(46, 125, 50),    subMovimenti));
+        row.add(kpiCard("Sotto scorta",     String.valueOf(prodottiSottoScorta), new Color(198, 40, 40), "⚠ Attenzione"));
         return row;
     }
 
-    private JPanel kpiCard(String titolo, String valore, Color colore) {
-        DashboardOperatore.RoundPanel card =
-                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
+    private JPanel kpiCard(String titolo, String valore, Color colore, String sub) {
+        JPanel card = new JPanel() {
+            private boolean hovered = false;
+            {
+                addMouseListener(new MouseAdapter() {
+                    @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    @Override public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
+                });
+            }
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(hovered ? new Color(0xEA, 0xF2, 0xFF) : StyleWMS.BIANCO);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
+                g2.setColor(CARD_BORDER);
+                g2.setStroke(new BasicStroke(1f));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth()-1, getHeight()-1, 14, 14));
+                // striscia colorata in cima alla card per identificare il tipo di KPI
+                GradientPaint gp = new GradientPaint(0, 0,
+                        new Color(colore.getRed(), colore.getGreen(), colore.getBlue(), 220),
+                        getWidth(), 0,
+                        new Color(colore.getRed(), colore.getGreen(), colore.getBlue(), 30));
+                g2.setPaint(gp);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), 4, 4, 4));
+                g2.dispose();
+            }
+        };
+        card.setOpaque(false);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(new EmptyBorder(16, 16, 16, 16));
+        card.setBorder(new EmptyBorder(18, 18, 18, 18));
+
         JLabel lblV = new JLabel(valore);
-        lblV.setFont(new Font("SansSerif", Font.BOLD, 28));
+        lblV.setFont(new Font("SansSerif", Font.BOLD, 32));
         lblV.setForeground(colore);
+
         JLabel lblT = new JLabel(titolo);
-        lblT.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        lblT.setFont(new Font("SansSerif", Font.BOLD, 11));
         lblT.setForeground(StyleWMS.GRIGIO_TESTO);
+
+        JLabel lblS = new JLabel(sub);
+        lblS.setFont(new Font("SansSerif", Font.PLAIN, 10));
+        lblS.setForeground(new Color(colore.getRed(), colore.getGreen(), colore.getBlue(), 160));
+
         card.add(lblV);
-        card.add(Box.createVerticalStrut(4));
+        card.add(Box.createVerticalStrut(2));
         card.add(lblT);
+        card.add(Box.createVerticalStrut(4));
+        card.add(lblS);
         return card;
     }
 
     private JPanel buildTabellaMovimenti() {
-        DashboardOperatore.RoundPanel panel =
-                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
+        JPanel panel = buildCard(StyleWMS.BIANCO, CARD_BORDER);
         panel.setLayout(new BorderLayout(0, 10));
-        panel.setBorder(new EmptyBorder(16, 16, 16, 16));
+        panel.setBorder(new EmptyBorder(18, 18, 18, 18));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         String[] col = {"ID Prodotto", "Tipo", "Quantità", "Data", "Operatore"};
-        Object[][] dati = {
-                {"123456", "Carico",  "+50",  "01/06/2026", "m.verdi@wms.it"},
-                {"789012", "Scarico", "-20",  "01/06/2026", "a.bianchi@wms.it"},
-                {"345678", "Carico",  "+30",  "31/05/2026", "m.verdi@wms.it"},
-                {"901234", "Scarico", "-5",   "31/05/2026", "l.neri@wms.it"},
-                {"567890", "Carico",  "+100", "30/05/2026", "a.bianchi@wms.it"},
-        };
+        Object[][] dati = {};
+
+        try {
+            // carica gli ultimi 5 movimenti dal database per il riepilogo nella panoramica
+            List<Movimento> recenti = new MovimentoController().getUltimiMovimenti(5);
+            if (recenti != null && !recenti.isEmpty()) {
+                dati = new Object[recenti.size()][5];
+                for (int i = 0; i < recenti.size(); ++i) {
+                    Movimento m = recenti.get(i);
+                    // aggiunge segno + o - alla quantità in base al tipo di movimento
+                    String segno = "Carico".equals(m.getTipoMovimento()) ? "+" : "-";
+                    dati[i][0] = m.getIdProdotto();
+                    dati[i][1] = m.getTipoMovimento();
+                    dati[i][2] = segno + m.getQtaProdotto();
+                    dati[i][3] = m.getData().toString();
+                    dati[i][4] = m.getIdOperatore();
+                }
+            } else {
+                dati = new Object[][]{{"Nessun movimento", "-", "-", "-", "-"}};
+            }
+        } catch (Exception e) {
+            dati = new Object[][]{{"Errore caricamento", "-", "-", "-", "-"}};
+        }
+
         panel.add(buildTable(col, dati), BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel buildSottoScorta() {
-        DashboardOperatore.RoundPanel panel =
-                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, new Color(198, 40, 40, 60), 10);
+        JPanel panel = buildCard(new Color(0xFF, 0xFA, 0xFA), ALERT_BORDER);
         panel.setLayout(new BorderLayout(0, 10));
-        panel.setBorder(new EmptyBorder(16, 16, 16, 16));
+        panel.setBorder(new EmptyBorder(18, 18, 18, 18));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
         String[] col = {"ID", "Nome Prodotto", "Disponibile", "Soglia Minima"};
-        Object[][] dati = {
-                {"000011", "Guanti latex",      "3", "10"},
-                {"000045", "Nastro da imballo", "1", "5"},
-                {"000078", "Scatole S",          "4", "20"},
-                {"000102", "Etichette",          "8", "15"},
-                {"000134", "Pallets",            "2", "6"},
-        };
+        Object[][] dati = {};
+
+        try {
+            // filtra dal lato client i prodotti con isSottoScorta() == true
+            List<Prodotto> tuttiProdotti = new ProdottoController().getAllProdotti();
+            List<Object[]> righe = new ArrayList<>();
+            if (tuttiProdotti != null) {
+                for (Prodotto p : tuttiProdotti) {
+                    if (p.isSottoScorta()) {
+                        righe.add(new Object[]{
+                                p.getID(),
+                                p.getNome(),
+                                String.valueOf(p.getQtaDisponibile()),
+                                String.valueOf(p.getSogliaMinima())
+                        });
+                    }
+                }
+            }
+            dati = righe.isEmpty()
+                    ? new Object[][]{{"Nessun prodotto sotto scorta", "-", "-", "-"}}
+                    : righe.toArray(new Object[0][]);
+        } catch (Exception e) {
+            dati = new Object[][]{{"Errore caricamento dati", "-", "-", "-"}};
+        }
+
         panel.add(buildTable(col, dati), BorderLayout.CENTER);
         return panel;
     }
 
     private JPanel buildAndamento() {
-        DashboardOperatore.RoundPanel panel =
-                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
-        panel.setLayout(new GridLayout(1, 3, 16, 0));
-        panel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        JPanel panel = buildCard(StyleWMS.BIANCO, CARD_BORDER);
+        panel.setLayout(new GridLayout(1, 3, 20, 0));
+        panel.setBorder(new EmptyBorder(22, 22, 22, 22));
         panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 110));
-        panel.add(statBox("Operazioni totali (7gg)",  "89",                    StyleWMS.BLU_ACCIAIO));
-        panel.add(statBox("Prodotti più movimentati", "Guanti latex, Scatole", StyleWMS.BLU_MEDIO));
-        panel.add(statBox("Sotto scorta attualmente", "5",                     new Color(198, 40, 40)));
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
+
+        // recupera il numero di movimenti negli ultimi 7 giorni
+        String operazioniTotali = "N/D";
+        try {
+            List<Movimento> mov7gg = new MovimentoController().getMovimentiUltimi7Giorni();
+            if(mov7gg != null) operazioniTotali = String.valueOf(mov7gg.size());
+        } catch (Exception ignored){}
+
+        // recupera i 2 prodotti più movimentati nel periodo
+        String movimentatiMaggiormente = "N/D";
+        try {
+            List<String> top = new MovimentoController().getProdottiPiuMovimentati(2);
+            if(top != null && !top.isEmpty()) movimentatiMaggiormente = String.join(", ", top);
+        } catch (Exception ignored) {}
+
+        String sottoScortaStr = "N/D";
+        try {
+            List<Prodotto> prodotti = new ProdottoController().getAllProdotti();
+            if(prodotti != null){
+                prodotti.stream().filter(p -> p.getSogliaMinima() != null && p.isSottoScorta()).count();
+            }
+        } catch (Exception ignored) {}
+
+        panel.add(statBox("Operazioni totali (7gg)",  operazioniTotali, StyleWMS.BLU_ACCIAIO));
+        panel.add(statBox("Prodotti più movimentati", movimentatiMaggiormente, StyleWMS.BLU_MEDIO));
+        panel.add(statBox("Sotto scorta attualmente", sottoScortaStr, new Color(198, 40, 40)));
         return panel;
     }
 
@@ -505,81 +753,127 @@ public class DashboardResponsabile extends JFrame {
         JPanel p = new JPanel();
         p.setOpaque(false);
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-        JLabel lv = new JLabel(valore);
-        lv.setFont(new Font("SansSerif", Font.BOLD, 20));
+
+        // piccola barra colorata decorativa sopra il valore
+        JPanel accent = new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                GradientPaint gp = new GradientPaint(0, 0,
+                        new Color(colore.getRed(), colore.getGreen(), colore.getBlue(), 200),
+                        50, 0,
+                        new Color(colore.getRed(), colore.getGreen(), colore.getBlue(), 0));
+                g2.setPaint(gp);
+                g2.fillRoundRect(0, 0, getWidth(), 3, 3, 3);
+                g2.dispose();
+            }
+            @Override public Dimension getPreferredSize() { return new Dimension(50, 3); }
+            @Override public Dimension getMaximumSize()   { return new Dimension(50, 3); }
+        };
+        accent.setOpaque(false);
+
+        JLabel lv = new JLabel("<html>"+ valore + "</html>");
+        lv.setFont(new Font("SansSerif", Font.BOLD, 24));
         lv.setForeground(colore);
+
         JLabel le = new JLabel(etichetta);
-        le.setFont(new Font("SansSerif", Font.PLAIN, 11));
+        le.setFont(FONT_LABEL);
         le.setForeground(StyleWMS.GRIGIO_TESTO);
+
+        p.add(accent);
+        p.add(Box.createVerticalStrut(8));
         p.add(lv);
         p.add(Box.createVerticalStrut(4));
         p.add(le);
         return p;
     }
 
-    private JPanel buildFooter() {
-        DashboardOperatore.RoundPanel footer =
-                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
-        footer.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        footer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
-        footer.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JLabel icon = new JLabel("ℹ");
-        icon.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        icon.setForeground(StyleWMS.BLU_MEDIO);
-        JLabel msg = new JLabel("Hai riscontrato qualche problema?");
-        msg.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        msg.setForeground(StyleWMS.GRIGIO_TESTO);
-        JLabel link = new JLabel("<html><u>Invia un report</u></html>");
-        link.setFont(new Font("SansSerif", Font.BOLD, 12));
-        link.setForeground(StyleWMS.BLU_MEDIO);
-        link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        link.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                dispose();
-                new ReportBug().setVisible(true);
-            }
-        });
-        footer.add(icon);
-        footer.add(msg);
-        footer.add(link);
-        return footer;
-    }
-
     private JScrollPane buildTable(String[] colonne, Object[][] dati) {
+        // tabella non editabile con righe alternate bianco/grigio chiarissimo
         DefaultTableModel model = new DefaultTableModel(dati, colonne) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
-        JTable table = new JTable(model);
+        JTable table = new JTable(model) {
+            @Override public Component prepareRenderer(javax.swing.table.TableCellRenderer r, int row, int col) {
+                Component c = super.prepareRenderer(r, row, col);
+                if (!isRowSelected(row)) {
+                    c.setBackground(row % 2 == 0 ? ROW_EVEN : ROW_ODD);
+                    c.setForeground(StyleWMS.GRIGIO_TESTO);
+                }
+                return c;
+            }
+        };
         table.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        table.setRowHeight(26);
+        table.setRowHeight(28);
         table.setShowHorizontalLines(true);
         table.setShowVerticalLines(false);
-        table.setGridColor(new Color(235, 235, 235));
-        table.getTableHeader().setFont(new Font("SansSerif", Font.BOLD, 12));
-        table.getTableHeader().setBackground(StyleWMS.AZZURRO_LIGHT);
-        table.getTableHeader().setForeground(StyleWMS.BLU_ACCIAIO);
+        table.setGridColor(GRID_COLOR);
         table.setBackground(StyleWMS.BIANCO);
-        table.setSelectionBackground(StyleWMS.AZZURRO_LIGHT);
+        table.setSelectionBackground(SEL_BG);
         table.setSelectionForeground(StyleWMS.BLU_ACCIAIO);
+        table.setIntercellSpacing(new Dimension(0, 0));
+
+        JTableHeader header = table.getTableHeader();
+        header.setFont(new Font("SansSerif", Font.BOLD, 11));
+        header.setBackground(StyleWMS.AZZURRO_LIGHT);
+        header.setForeground(StyleWMS.BLU_ACCIAIO);
+        header.setOpaque(true);
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, CARD_BORDER));
+
         JScrollPane sp = new JScrollPane(table,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        sp.setBorder(null);
-        sp.setPreferredSize(new Dimension(0, 160));
+        sp.setBorder(BorderFactory.createLineBorder(GRID_COLOR, 1));
+        sp.setPreferredSize(new Dimension(0, 168));
+        sp.getViewport().setBackground(StyleWMS.BIANCO);
         return sp;
     }
 
-    private JLabel buildSectionLabel(String testo) {
-        JLabel lbl = new JLabel();
-        lbl.setText("<html><span style='letter-spacing:2px'>" + testo.toUpperCase() + "</span></html>");
-        lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
-        lbl.setForeground(new Color(0x88, 0x88, 0x88));
-        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        return lbl;
+    private JPanel buildCard(Color bg, Color border) {
+        return new JPanel() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(bg);
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 14, 14));
+                g2.setColor(border);
+                g2.setStroke(new BasicStroke(1f));
+                g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, getWidth()-1, getHeight()-1, 14, 14));
+                g2.dispose();
+            }
+        };
     }
 
-    // ── Logout ───────────────────────────────────────────────────
+    private JPanel buildSectionLabel(String testo, String ref) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        p.setOpaque(false);
+        p.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        JLabel lbl = new JLabel(testo.toUpperCase());
+        lbl.setFont(new Font(Font.MONOSPACED, Font.BOLD, 10));
+        lbl.setForeground(StyleWMS.GRIGIO_TESTO);
+
+        // chip azzurro con il codice del requisito funzionale associato alla sezione
+        JLabel chip = new JLabel(ref) {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(StyleWMS.AZZURRO_LIGHT);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), getHeight(), getHeight());
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        chip.setFont(new Font(Font.MONOSPACED, Font.BOLD, 9));
+        chip.setForeground(StyleWMS.BLU_ACCIAIO);
+        chip.setBorder(new EmptyBorder(2, 8, 2, 8));
+        chip.setOpaque(false);
+
+        p.add(lbl);
+        p.add(chip);
+        return p;
+    }
+
+    // LOGOUT
     private JPanel buildLogoutCard() {
         JPanel card = new JPanel() {
             private boolean hovered = false;
@@ -588,6 +882,7 @@ public class DashboardResponsabile extends JFrame {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
                     @Override public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
                     @Override public void mouseClicked(MouseEvent e) {
+                        // chiude la dashboard e torna alla HomePage
                         JOptionPane.showMessageDialog(DashboardResponsabile.this, "Logout effettuato.");
                         dispose();
                         HomePage homePage = new HomePage();
@@ -597,19 +892,21 @@ public class DashboardResponsabile extends JFrame {
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             }
 
-            @Override
-            protected void paintComponent(Graphics g) {
+            @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(hovered ? new Color(180, 30, 30) : new Color(198, 40, 40));
-                g2.fill(new RoundRectangle2D.Float(8, 0, getWidth() - 16, getHeight(), 12, 12));
+                Color base = hovered ? new Color(180, 30, 30) : new Color(198, 40, 40);
+                GradientPaint gp = new GradientPaint(0, 0, base,
+                        getWidth(), 0, new Color(base.getRed(), base.getGreen(), base.getBlue(), 180));
+                g2.setPaint(gp);
+                g2.fill(new RoundRectangle2D.Float(10, 2, getWidth()-20, getHeight()-4, 10, 10));
                 g2.dispose();
             }
         };
         card.setOpaque(false);
         card.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        card.setBorder(new EmptyBorder(4, 20, 4, 16));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        card.setBorder(new EmptyBorder(6, 22, 6, 16));
 
         FontIcon logoutIcon = FontIcon.of(Material2OutlinedMZ.POWER_SETTINGS_NEW, 16, StyleWMS.BIANCO);
         JLabel ico = new JLabel(logoutIcon);
@@ -618,12 +915,13 @@ public class DashboardResponsabile extends JFrame {
         JLabel lbl = new JLabel("Esci");
         lbl.setFont(new Font("SansSerif", Font.BOLD, 13));
         lbl.setForeground(StyleWMS.BIANCO);
+
         card.add(ico);
         card.add(lbl);
         return card;
     }
 
-    // ── Helpers ──────────────────────────────────────────────────
+    // estrae le prime due iniziali dal nome completo (es. "Mario Rossi" -> "MR")
     private String buildInitials(String nome) {
         String[] parti = nome.trim().split("\\s+");
         if (parti.length == 1)
@@ -631,7 +929,6 @@ public class DashboardResponsabile extends JFrame {
         return ("" + parti[0].charAt(0) + parti[parti.length - 1].charAt(0)).toUpperCase();
     }
 
-    // ── main ─────────────────────────────────────────────────────
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }

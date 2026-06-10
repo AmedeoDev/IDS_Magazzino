@@ -64,11 +64,6 @@ public class UtenteDAO {
             stmt.setString(1, email);
             stmt.setString(2, password);
 
-            // DEBUG: VEDO QUALI DATI SONO PASSATI
-
-            System.out.println("[DEBUG] - Email: " + email);
-            System.out.println("[DEBUG] - Password: " + password);
-
             ResultSet result = stmt.executeQuery();
 
             if (result.next()) {
@@ -91,5 +86,22 @@ public class UtenteDAO {
         }
 
         return null;
+    }
+
+    public int countUtentiPerPrefisso(String prefisso) throws SQLException{
+
+        String query = "SELECT COUNT(*) FROM utente WHERE IdUtente LIKE ?";
+        try (Connection conn = DBConnectionManager.getConnection();
+        PreparedStatement stmt = conn.prepareStatement(query)){
+
+            stmt.setString(1, prefisso + "-%");
+            try (ResultSet rs = stmt.executeQuery()){
+
+                return rs.next() ? rs.getInt(1) : 0;
+
+            }
+
+        }
+
     }
 }

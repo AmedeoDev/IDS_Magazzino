@@ -70,7 +70,10 @@ public class RegistrationController {
 
         // 8. Creazione utente
         Utente nuovoUtente;
-        String idAssociato = "ST-" + System.currentTimeMillis() % 1000;
+
+        String prefisso = ruolo.equalsIgnoreCase("OPERATORE") ? "OPE" : "RESP";
+
+        String idAssociato = prefisso + "-" + String.format("%03d", generaNumeroID(prefisso));
 
         if (ruolo.equalsIgnoreCase("OPERATORE")) {
             nuovoUtente = new Operatore(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
@@ -118,5 +121,16 @@ public class RegistrationController {
                             + " [ " + nuovoUtente.getID_Utenete() + " ] { " + nuovoUtente.getRuolo() + " }");
 
         return true;
+    }
+
+    private int generaNumeroID(String prefisso) {
+
+        try {
+            UtenteDAO dao = new UtenteDAO();
+            return dao.countUtentiPerPrefisso(prefisso)+1;
+        } catch (Exception e){
+            return (int)(System.currentTimeMillis()%900) + 100;
+        }
+
     }
 }

@@ -18,6 +18,7 @@ public class LoginPage extends JFrame {
 
     private JTextField txtEmail;
     private JPasswordField txtPassword;
+    private JLabel lblErrore;
     private JButton btnAccedi;
 
     public LoginPage() {
@@ -72,6 +73,7 @@ public class LoginPage extends JFrame {
         stilizza(txtPassword);
         form.add(txtPassword);
 
+
         form.add(Box.createVerticalStrut(28));
 
         // Bottone con Animazione Hover
@@ -106,6 +108,14 @@ public class LoginPage extends JFrame {
         btnAccedi.setFocusPainted(false);
         btnAccedi.setBorderPainted(false);
         btnAccedi.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        // Label errore inline (nascosta di default)
+        lblErrore = new JLabel("");
+        lblErrore.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        lblErrore.setForeground(Color.RED);
+        lblErrore.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblErrore.setVisible(false);
+        form.add(lblErrore);
+        form.add(Box.createVerticalStrut(8));
         form.add(btnAccedi);
 
         form.add(Box.createVerticalStrut(15));
@@ -159,27 +169,33 @@ public class LoginPage extends JFrame {
             String email = txtEmail.getText().trim();
             String password = new String(txtPassword.getPassword());
 
+            // Nascondi errore precedente
+            lblErrore.setVisible(false);
+
             LoginController loginController = new LoginController();
             try {
                 Utente utenteLoggato = loginController.effettuaLogin(email, password);
-                if(utenteLoggato instanceof Operatore){
-                    DashboardOperatore dashboardOperatore = new DashboardOperatore((Operatore)utenteLoggato, "");
+
+                if (utenteLoggato instanceof Operatore) {
+                    DashboardOperatore dashboardOperatore = new DashboardOperatore((Operatore) utenteLoggato, "");
                     dashboardOperatore.setVisible(true);
-                } else if (utenteLoggato instanceof Responsabile){
+                } else if (utenteLoggato instanceof Responsabile) {
                     JOptionPane.showMessageDialog(null,
                             "Benvenuto responsabile: " + utenteLoggato.getNome() + " " + utenteLoggato.getCognome(),
-                         "Accesso Riuscito",
+                            "Accesso Riuscito",
                             JOptionPane.INFORMATION_MESSAGE);
-                    DashboardResponsabile dashboardResponsabile = new DashboardResponsabile((Responsabile)utenteLoggato, "");
+                    DashboardResponsabile dashboardResponsabile = new DashboardResponsabile((Responsabile) utenteLoggato, "");
                     dashboardResponsabile.setVisible(true);
                 }
 
-                this.dispose();
-            } catch (Exception ex){
-                JOptionPane.showMessageDialog(this,
-                        ex.getMessage(),
-                        "Errore di autenticazione",
-                        JOptionPane.ERROR_MESSAGE);
+                this.dispose(); // chiude solo in caso di successo
+
+            } catch (Exception ex) {
+                // Mostra errore inline, svuota password, NON chiude la finestra
+                lblErrore.setText("<html><span style='color:red;'>⚠ " + ex.getMessage() + "</span></html>");
+                lblErrore.setVisible(true);
+                txtPassword.setText("");
+                txtPassword.requestFocus();
             }
         });
     }

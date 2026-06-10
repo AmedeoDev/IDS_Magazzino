@@ -1,7 +1,11 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
+import it.unina.magazzino.control.ProdottoController;
 import it.unina.magazzino.entity.Operatore;
+import it.unina.magazzino.entity.Prodotto;
+import org.kordamp.ikonli.material2.Material2OutlinedMZ;
+import org.kordamp.ikonli.swing.FontIcon;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -9,30 +13,17 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.util.List;
 import javax.imageio.ImageIO;
 
 public class DashboardOperatore extends JFrame {
 
-    // ── Prodotto ─────────────────────────────────────────────────
-    record Prodotto(String nome, String sku, int quantita) {}
-
     private Operatore operatoreLoggato;
 
-    // ── Costruttore ───────────────────────────────────────────────
-    /**
-     * @param logoPath    Percorso al file immagine del logo (es. "assets/logo.png").
-     * Con null ottengo il badge testuale "WMS" come fallback.
-     */
     public DashboardOperatore(Operatore operatore, String logoPath) {
 
         this.operatoreLoggato = operatore;
-        String email = operatore.getEmail();
         String nomeUtente = operatore.getNome() + " " + operatore.getCognome();
-
-        // questo è solo per testare la risposta della UI
-        String password = operatore.getPassword();
 
         setTitle("Dashboard Operatore — " + nomeUtente);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -42,6 +33,7 @@ public class DashboardOperatore extends JFrame {
         getContentPane().setBackground(StyleWMS.GRIGIO_NEUTRO);
         setLayout(new BorderLayout());
 
+        // costruisce la barra superiore con avatar, nome e logo
         add(buildTopbar(nomeUtente, logoPath), BorderLayout.NORTH);
 
         JPanel body = new JPanel();
@@ -49,29 +41,26 @@ public class DashboardOperatore extends JFrame {
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(new EmptyBorder(20, 16, 16, 16));
 
-        // Etichetta sezione operazioni
         body.add(buildSectionLabel("Operazioni disponibili"));
         body.add(Box.createVerticalStrut(10));
-
-        // Bottoni operazione (blu, in risalto)
+        // pannello con le card cliccabili per storico e operazioni
         body.add(buildOperationsPanel());
         body.add(Box.createVerticalStrut(20));
-
-        // Separatore + etichetta prodotti
         body.add(buildSectionLabel("Prodotti in magazzino"));
         body.add(Box.createVerticalStrut(10));
 
-        List<Prodotto> prodotti = List.of(
-                new Prodotto("Prodotto Alpha",   "SKU-001", 42),
-                new Prodotto("Prodotto Beta",    "SKU-002", 17),
-                new Prodotto("Prodotto Gamma",   "SKU-003", 88),
-                new Prodotto("Prodotto Delta",   "SKU-004",  5),
-                new Prodotto("Prodotto Epsilon", "SKU-005", 31),
-                new Prodotto("Prodotto Zeta",    "SKU-006", 60)
-        );
-        body.add(buildProductsGrid(prodotti));
-        body.add(Box.createVerticalStrut(16));
-        body.add(buildFooter());
+        // carica tutti i prodotti dal database per mostrarli nella griglia
+        ProdottoController controller = new ProdottoController();
+        List<Prodotto> prodotti = controller.getAllProdotti();
+
+        if (prodotti != null && !prodotti.isEmpty()) {
+            body.add(buildProductsGrid(prodotti));
+        } else {
+            JLabel vuoto = new JLabel("Nessun prodotto presente in magazzino");
+            vuoto.setFont(new Font("SansSerif", Font.ITALIC, 12));
+            vuoto.setForeground(StyleWMS.GRIGIO_TESTO);
+            body.add(vuoto);
+        }
 
         JScrollPane scroll = new JScrollPane(body);
         scroll.setBorder(null);
@@ -79,9 +68,59 @@ public class DashboardOperatore extends JFrame {
         scroll.setOpaque(false);
         scroll.getVerticalScrollBar().setUnitIncrement(14);
         add(scroll, BorderLayout.CENTER);
+
+        // barra in basso con il pulsante di logout
+        add(buildLogoutBar(), BorderLayout.SOUTH);
     }
 
-    // ── Topbar blu ────────────────────────────────────────────────
+    private JPanel buildLogoutBar() {
+        JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 16, 8));
+        bar.setOpaque(false);
+
+        JPanel logoutCard = new JPanel() {
+            private boolean hovered = false;
+            {
+                addMouseListener(new MouseAdapter() {
+                    @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
+                    @Override public void mouseExited (MouseEvent e) { hovered = false; repaint(); }
+                    @Override public void mouseClicked(MouseEvent e) {
+                        // chiude la dashboard e torna alla HomePage
+                        JOptionPane.showMessageDialog(DashboardOperatore.this, "Logout effettuato.");
+                        dispose();
+                        HomePage homePage = new HomePage();
+                        homePage.setVisible(true);
+                    }
+                });
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            }
+
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(hovered ? new Color(180, 30, 30) : new Color(198, 40, 40));
+                g2.fill(new RoundRectangle2D.Float(0, 0, getWidth(), getHeight(), 12, 12));
+                g2.dispose();
+            }
+        };
+        logoutCard.setOpaque(false);
+        logoutCard.setLayout(new GridBagLayout());
+        logoutCard.setPreferredSize(new Dimension(110, 34));
+
+        FontIcon logoutIcon = FontIcon.of(Material2OutlinedMZ.POWER_SETTINGS_NEW, 16, StyleWMS.BIANCO);
+        JLabel ico = new JLabel(logoutIcon);
+        ico.setBorder(new EmptyBorder(0, 0, 0, 6));
+
+        JLabel lbl = new JLabel("Esci");
+        lbl.setFont(new Font("SansSerif", Font.BOLD, 13));
+        lbl.setForeground(StyleWMS.BIANCO);
+
+        logoutCard.add(ico);
+        logoutCard.add(lbl);
+        bar.add(logoutCard);
+        return bar;
+    }
+
     private JPanel buildTopbar(String nomeUtente, String logoPath) {
         JPanel bar = new JPanel(new BorderLayout()) {
             @Override protected void paintComponent(Graphics g) {
@@ -92,10 +131,10 @@ public class DashboardOperatore extends JFrame {
         bar.setOpaque(false);
         bar.setBorder(new EmptyBorder(12, 16, 12, 16));
 
-        // Sinistra: avatar + nome
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         left.setOpaque(false);
 
+        // avatar circolare con le iniziali del nome
         JPanel avatar = buildAvatar(nomeUtente);
         JPanel testi = new JPanel();
         testi.setOpaque(false);
@@ -114,7 +153,7 @@ public class DashboardOperatore extends JFrame {
         left.add(avatar);
         left.add(testi);
 
-        // Destra: logo immagine oppure badge testuale
+        // prova a caricare il logo, altrimenti usa il badge testuale
         JComponent logoWidget = buildLogoWidget(logoPath);
 
         bar.add(left, BorderLayout.WEST);
@@ -122,13 +161,11 @@ public class DashboardOperatore extends JFrame {
         return bar;
     }
 
-    /** Tenta di caricare il logo da file; se fallisce usa il stampa un plain text. */
     private JComponent buildLogoWidget(String logoPath) {
         if (logoPath != null) {
             try {
                 java.net.URL imgURL = getClass().getResource(logoPath);
-                // Ridimensiona mantenendo le proporzioni, altezza max 44px
-                if(imgURL != null){
+                if (imgURL != null) {
                     BufferedImage img = ImageIO.read(imgURL);
                     int h = 44;
                     int w = (int)((double) img.getWidth() / img.getHeight() * h);
@@ -137,14 +174,11 @@ public class DashboardOperatore extends JFrame {
                     lbl.setBorder(new EmptyBorder(0, 0, 0, 4));
                     return lbl;
                 }
-            } catch (Exception ignored) {
-                // File non trovato o non leggibile → fallback al badge
-            }
+            } catch (Exception ignored) {}
         }
         return buildTextBadge();
     }
 
-    /** Badge testuale "WMS" usato quando il logo non è disponibile. */
     private JLabel buildTextBadge() {
         JLabel badge = new JLabel("WMS");
         badge.setFont(new Font("SansSerif", Font.BOLD, 12));
@@ -156,8 +190,8 @@ public class DashboardOperatore extends JFrame {
         return badge;
     }
 
-    /** Cerchio con iniziali dell'utente. */
     private JPanel buildAvatar(String nomeUtente) {
+        // estrae le iniziali e le disegna su un cerchio azzurro
         String iniziali = buildInitials(nomeUtente);
         JPanel avatar = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
@@ -178,37 +212,35 @@ public class DashboardOperatore extends JFrame {
         return avatar;
     }
 
-    // ── Etichetta sezione ─────────────────────────────────────────
     private JLabel buildSectionLabel(String testo) {
-        JLabel lbl = new JLabel(testo.toUpperCase());
+        JLabel lbl = new JLabel();
+        lbl.setText("<html><span style='letter-spacing:2px'>" + testo.toUpperCase() + "</span></html>");
         lbl.setFont(new Font("SansSerif", Font.BOLD, 10));
         lbl.setForeground(new Color(0x88, 0x88, 0x88));
         lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
-        // lettera-spaziatura simulata con HTML
-        lbl.setText("<html><span style='letter-spacing:2px'>" + testo.toUpperCase() + "</span></html>");
         return lbl;
     }
 
-    // ── Pannello operazioni (blu, in risalto) ─────────────────────
     private JPanel buildOperationsPanel() {
         JPanel p = new JPanel(new GridLayout(1, 2, 12, 0));
         p.setOpaque(false);
         p.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
         p.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+        // card storico: apre la schermata VisualizzaStorico
         p.add(buildOpCard("Visualizza storico",  "Movimenti passati", "📋", () -> onStorico()));
+        // card operazioni: apre la schermata EffettuaOperazioni per carico/scarico
         p.add(buildOpCard("Effettua operazioni", "Carico / scarico",  "⇄",  () -> onOperazioni()));
         return p;
     }
 
     private JPanel buildOpCard(String titolo, String sub, String iconTxt, Runnable azione) {
-        // Pannello blu con angoli arrotondati
         JPanel card = new JPanel() {
             private boolean hovered = false;
             {
                 addMouseListener(new MouseAdapter() {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
                     @Override public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
+                    // esegue il Runnable passato al costruttore al click sulla card
                     @Override public void mouseClicked(MouseEvent e) { azione.run(); }
                 });
                 setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -225,7 +257,6 @@ public class DashboardOperatore extends JFrame {
         card.setLayout(new BorderLayout(0, 8));
         card.setBorder(new EmptyBorder(16, 16, 14, 16));
 
-        // Icona + testi in alto
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         top.setOpaque(false);
 
@@ -261,7 +292,6 @@ public class DashboardOperatore extends JFrame {
         top.add(iconBox);
         top.add(testi);
 
-        // Freccia in basso a destra
         JLabel arrow = new JLabel("→");
         arrow.setFont(new Font("SansSerif", Font.BOLD, 16));
         arrow.setForeground(new Color(0xD6, 0xE4, 0xF0, 120));
@@ -272,11 +302,11 @@ public class DashboardOperatore extends JFrame {
         return card;
     }
 
-    // ── Griglia prodotti ──────────────────────────────────────────
     private JPanel buildProductsGrid(List<Prodotto> prodotti) {
         JPanel grid = new JPanel(new GridLayout(0, 2, 10, 8));
         grid.setOpaque(false);
         grid.setAlignmentX(Component.LEFT_ALIGNMENT);
+        // crea una card per ogni prodotto ricevuto
         for (Prodotto p : prodotti) grid.add(buildProductCard(p));
         return grid;
     }
@@ -306,16 +336,18 @@ public class DashboardOperatore extends JFrame {
         JPanel testi = new JPanel();
         testi.setOpaque(false);
         testi.setLayout(new BoxLayout(testi, BoxLayout.Y_AXIS));
-        JLabel nome = new JLabel(p.nome());
+        JLabel nome = new JLabel(p.getNome());
         nome.setFont(new Font("SansSerif", Font.BOLD, 12));
         nome.setForeground(StyleWMS.ANTRACITE);
-        JLabel sku = new JLabel(p.sku());
+        // mostra l'ID del prodotto come codice SKU sotto il nome
+        JLabel sku = new JLabel(p.getID());
         sku.setFont(new Font("SansSerif", Font.PLAIN, 10));
         sku.setForeground(StyleWMS.GRIGIO_TESTO);
         testi.add(nome);
         testi.add(sku);
 
-        JLabel qty = new JLabel(String.valueOf(p.quantita()));
+        // badge blu con la quantità disponibile, posizionato a destra
+        JLabel qty = new JLabel(String.valueOf(p.getQtaDisponibile()));
         qty.setFont(new Font("SansSerif", Font.BOLD, 12));
         qty.setForeground(StyleWMS.BLU_ACCIAIO);
         qty.setBackground(StyleWMS.AZZURRO_LIGHT);
@@ -328,63 +360,27 @@ public class DashboardOperatore extends JFrame {
         return card;
     }
 
-    // ── Footer ────────────────────────────────────────────────────
-    private JPanel buildFooter() {
-        JPanel footer = new RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
-        footer.setLayout(new FlowLayout(FlowLayout.LEFT, 8, 8));
-        footer.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
-        footer.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-        JLabel icon = new JLabel("ℹ");
-        icon.setFont(new Font("SansSerif", Font.PLAIN, 13));
-        icon.setForeground(StyleWMS.BLU_MEDIO);
-
-        JLabel msg = new JLabel("Hai riscontrato qualche problema?");
-        msg.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        msg.setForeground(StyleWMS.GRIGIO_TESTO);
-
-        JLabel link = new JLabel("<html><u>Invia un report</u></html>");
-        link.setFont(new Font("SansSerif", Font.BOLD, 12));
-        link.setForeground(StyleWMS.BLU_MEDIO);
-        link.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        link.addMouseListener(new MouseAdapter() {
-            @Override public void mouseClicked(MouseEvent e) { onReport(); }
-        });
-
-        footer.add(icon);
-        footer.add(msg);
-        footer.add(link);
-        return footer;
-    }
-
-    // ── Helpers ───────────────────────────────────────────────────
+    // estrae le iniziali dal nome (es. "Luca Bianchi" -> "LB")
     private String buildInitials(String nome) {
         String[] parti = nome.trim().split("\\s+");
         if (parti.length == 1) return parti[0].substring(0, Math.min(2, parti[0].length())).toUpperCase();
         return ("" + parti[0].charAt(0) + parti[parti.length - 1].charAt(0)).toUpperCase();
     }
 
-    // ── Azioni ────────────────────────────────────────────────────
-    private void onStorico(){
+    private void onStorico() {
+        // chiude la dashboard e apre la schermata dello storico movimenti dell'operatore
         this.dispose();
         VisualizzaStorico visualizzaStorico = new VisualizzaStorico(this.operatoreLoggato);
         visualizzaStorico.setVisible(true);
     }
 
-    // Collegamento effettuato alla classe EffettuaOperazioni
     private void onOperazioni() {
+        // chiude la dashboard e apre la schermata per carico/scarico
         this.dispose();
         EffettuaOperazioni effettuaOperazioni = new EffettuaOperazioni(this.operatoreLoggato);
         effettuaOperazioni.setVisible(true);
     }
 
-    private void onReport(){
-        this.dispose();
-        ReportBug reportBug = new ReportBug();
-        reportBug.setVisible(true);
-    }
-
-    // ── RoundPanel ────────────────────────────────────────────────
     static class RoundPanel extends JPanel {
         private Color bg;
         private final Color border;
@@ -406,22 +402,20 @@ public class DashboardOperatore extends JFrame {
         }
     }
 
-    // ── main ──────────────────────────────────────────────────────
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
             catch (Exception ignored) {}
 
             Operatore operatoreTest = new Operatore(
-                    "Duce",
-                    "Mussolini",
-                    "duce@mail.it",
+                    "Mario",
+                    "Rossi",
+                    "rossi@mail.it",
                     "888888",
-                    "DUCE_1"
+                    "ROSSI_1"
             );
 
             String logoPath = args.length > 1 ? args[1] : null;
-
             new DashboardOperatore(operatoreTest, logoPath).setVisible(true);
         });
     }
