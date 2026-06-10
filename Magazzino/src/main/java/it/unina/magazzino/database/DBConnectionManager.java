@@ -13,7 +13,7 @@ public class DBConnectionManager {
 
     private static final String URL = "jdbc:mysql://localhost:3306/magazzino";
     private static final String USER = "root";
-    private static final String PSW = "adminSQLP_assword#12";
+    private static final String PSW ;
 
 
     static {
@@ -31,7 +31,7 @@ public class DBConnectionManager {
 
         // URL = props.getProperty("db.url");
         // USER = props.getProperty("db.user");
-        // PSW = props.getProperty("db.password");
+        PSW = props.getProperty("db.password");
     }
 
 
