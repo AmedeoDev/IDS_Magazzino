@@ -2,13 +2,16 @@ package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
 import it.unina.magazzino.control.LoginController;
+import it.unina.magazzino.control.ProdottoController;
 import it.unina.magazzino.entity.Operatore;
+import it.unina.magazzino.entity.Prodotto;
 import it.unina.magazzino.entity.Responsabile;
 import it.unina.magazzino.entity.Utente;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.List;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -175,6 +178,8 @@ public class LoginPage extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE);
                     DashboardResponsabile dashboardResponsabile = new DashboardResponsabile((Responsabile) utenteLoggato, "");
                     dashboardResponsabile.setVisible(true);
+
+                    SwingUtilities.invokeLater(() -> mostraNotificheSeNecessario(dashboardResponsabile));
                 }
 
                 // chiude la loginpage solo se il login è andato a buon fine
@@ -188,6 +193,24 @@ public class LoginPage extends JFrame {
                 txtPassword.requestFocus();
             }
         });
+    }
+
+    private void mostraNotificheSeNecessario(DashboardResponsabile dashboardResponsabile) {
+
+        try {
+            List<Prodotto> tutti = new it.unina.magazzino.control.ProdottoController().getAllProdotti();
+            if (tutti == null) return;
+
+            List<Prodotto> critici = new java.util.ArrayList<>();
+            for (Prodotto p : tutti)
+                if (p.isSottoScorta()) critici.add(p);
+
+            if (!critici.isEmpty()) {
+                NotificaSottoScorta notifica = new NotificaSottoScorta(dashboardResponsabile, critici);
+                notifica.mostra();
+            }
+        } catch (Exception ignored){}
+
     }
 
     // crea un'etichetta stilizzata per i campi del form

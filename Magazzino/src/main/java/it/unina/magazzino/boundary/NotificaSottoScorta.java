@@ -11,7 +11,7 @@ import java.util.List;
 
 public class NotificaSottoScorta extends JDialog {
 
-    private static final int DURATA_SECONDI = 5;
+    private static final int DURATA_SECONDI = 7;
     private JLabel lblCountdown;
     private Timer timer;
     private int secondiRimasti = DURATA_SECONDI;
