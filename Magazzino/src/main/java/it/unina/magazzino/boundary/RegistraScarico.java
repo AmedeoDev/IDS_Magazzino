@@ -18,27 +18,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Schermata "Registra Scarico".
- *
- * Flusso:
- *   1. L'operatore visualizza il catalogo dei prodotti in magazzino.
- *   2. Seleziona il prodotto desiderato dalla lista.
- *   3. Inserisce la quantità da prelevare.
- *   4. Il sistema verifica che la quantità non ecceda la disponibilità.
- *      - Se eccede: l'operazione viene ANNULLATA e l'operatore ne è informato;
- *        il responsabile riceve una notifica in background.
- *      - Se la disponibilità residua scende sotto la soglia minima: il responsabile
- *        viene notificato in background, ma l'operatore NON vede alcun avviso
- *        (la gestione del riordino non è di sua competenza).
- */
 public class RegistraScarico extends JFrame {
 
+    // mappa SKU → {nome, quantitàCorrente, sogliaMinima} caricata dal DB
     private final Map<String, String[]> catalogo = new LinkedHashMap<>();
 
     private Operatore operatoreLoggato;
 
-    // ── Componenti UI ─────────────────────────────────────────────
     private DefaultListModel<String> listModel;
     private JList<String>            productList;
     private JLabel                   lblProdottoScelto;
@@ -48,12 +34,13 @@ public class RegistraScarico extends JFrame {
     private JButton                  btnConferma;
     private JButton                  btnDashboard;
 
-    /** SKU (codice) del prodotto attualmente selezionato, null se nessuno. */
+    // SKU del prodotto selezionato, null se nessuno è selezionato
     private String skuSelezionato = null;
 
-    // ── Costruttore ───────────────────────────────────────────────
     public RegistraScarico(Operatore operatore) {
         this.operatoreLoggato = operatore;
+
+        // carica i prodotti dal DB prima di costruire l'interfaccia
         inizializzaCatalogo();
 
         setTitle("WMS PRO – Movimento di Scarico");
@@ -72,16 +59,15 @@ public class RegistraScarico extends JFrame {
         setContentPane(root);
     }
 
-    // ── Dati presi dal DB ───────
     private void inizializzaCatalogo() {
-        // Formato: nome | quantità | sogliaMinima
+        // formato: nome | quantità corrente | soglia minima
         catalogo.clear();
         try {
             ProdottoController controller = new ProdottoController();
             List<Prodotto> inventario = controller.getAllProdotti();
 
-            if(inventario != null){
-                for(Prodotto p : inventario){
+            if (inventario != null) {
+                for (Prodotto p : inventario) {
                     catalogo.put(p.getID(), new String[]{
                             p.getNome(),
                             String.valueOf(p.getQtaDisponibile()),
@@ -94,7 +80,6 @@ public class RegistraScarico extends JFrame {
         }
     }
 
-    // ── Header blu ────────────────────────────────────────────────
     private JPanel buildHeader() {
         JPanel header = new JPanel();
         header.setBackground(StyleWMS.BLU_ACCIAIO);
@@ -117,24 +102,21 @@ public class RegistraScarico extends JFrame {
         return header;
     }
 
-    // ── Corpo principale ──────────────────────────────────────────
     private JPanel buildBody() {
         JPanel body = new JPanel();
         body.setBackground(StyleWMS.BIANCO);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(new EmptyBorder(20, 30, 10, 30));
 
-        // 1. Catalogo prodotti
         body.add(sectionLabel("1. Seleziona prodotto"));
         body.add(Box.createVerticalStrut(8));
         body.add(buildProductList());
         body.add(Box.createVerticalStrut(12));
 
-        // 2. Riepilogo prodotto selezionato
+        // riepilogo del prodotto selezionato: nome, disponibilità e soglia minima
         body.add(buildProductSummaryPanel());
         body.add(Box.createVerticalStrut(16));
 
-        // 3. Quantità
         body.add(sectionLabel("2. Quantità da prelevare"));
         body.add(Box.createVerticalStrut(6));
         txtQuantita = new JTextField();
@@ -142,16 +124,15 @@ public class RegistraScarico extends JFrame {
         body.add(txtQuantita);
         body.add(Box.createVerticalStrut(20));
 
-        // 4. Bottone conferma
         btnConferma = buildPrimaryButton("Conferma Scarico");
         body.add(btnConferma);
 
+        // al click su conferma esegue la validazione e il salvataggio del movimento
         btnConferma.addActionListener(e -> onConferma());
 
         return body;
     }
 
-    // ── Lista prodotti con scroll ─────────────────────────────────
     private JScrollPane buildProductList() {
         listModel = new DefaultListModel<>();
         for (Map.Entry<String, String[]> entry : catalogo.entrySet()) {
@@ -168,6 +149,7 @@ public class RegistraScarico extends JFrame {
         productList.setBorder(new EmptyBorder(4, 8, 4, 8));
         productList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+        // ogni selezione aggiorna il pannello riepilogo con nome, disponibilità e soglia
         productList.addListSelectionListener(this::onProductSelected);
 
         JScrollPane scroll = new JScrollPane(productList);
@@ -178,12 +160,11 @@ public class RegistraScarico extends JFrame {
         return scroll;
     }
 
-    /** Costruisce la stringa da visualizzare nella JList per un prodotto. */
+    // costruisce la stringa da mostrare nella JList per ogni prodotto
     private String buildVoceList(String sku, String[] dati) {
         return sku + "  |  " + dati[0] + "  (disponibili: " + dati[1] + "  |  soglia: " + dati[2] + ")";
     }
 
-    // ── Pannello riepilogo prodotto selezionato
     private JPanel buildProductSummaryPanel() {
         JPanel panel = new JPanel(new GridLayout(3, 1, 0, 2));
         panel.setOpaque(false);
@@ -198,6 +179,7 @@ public class RegistraScarico extends JFrame {
         lblDisponibilitaCorrente.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblDisponibilitaCorrente.setForeground(StyleWMS.GRIGIO_TESTO);
 
+        // soglia minima in arancione per richiamare l'attenzione sull'operatore
         lblSogliaMinima = new JLabel("");
         lblSogliaMinima.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         lblSogliaMinima.setForeground(new Color(0xCC, 0x55, 0x00));
@@ -208,7 +190,6 @@ public class RegistraScarico extends JFrame {
         return panel;
     }
 
-    // ── Bottoni in fondo ──────────────────────────────────────────
     private JPanel buildFooterButtons() {
         JPanel panel = new JPanel();
         panel.setBackground(StyleWMS.BIANCO);
@@ -218,6 +199,7 @@ public class RegistraScarico extends JFrame {
         btnDashboard = buildSecondaryButton("Torna alla Dashboard");
         panel.add(btnDashboard);
 
+        // torna alla dashboard senza salvare nulla
         btnDashboard.addActionListener(e -> {
             this.dispose();
             new DashboardOperatore(this.operatoreLoggato, "resources/assets/logoFinale.png").setVisible(true);
@@ -226,8 +208,8 @@ public class RegistraScarico extends JFrame {
         return panel;
     }
 
-    // ── Logica di selezione prodotto
     private void onProductSelected(ListSelectionEvent e) {
+        // ignora gli eventi intermedi durante il trascinamento della selezione
         if (e.getValueIsAdjusting()) return;
         int idx = productList.getSelectedIndex();
         if (idx < 0) {
@@ -237,16 +219,16 @@ public class RegistraScarico extends JFrame {
             lblSogliaMinima.setText("");
             return;
         }
+        // ricava lo SKU dall'indice: l'ordine della mappa coincide con quello della lista
         skuSelezionato = (String) catalogo.keySet().toArray()[idx];
-        String[] dati = catalogo.get(skuSelezionato);
+        String[] dati  = catalogo.get(skuSelezionato);
         lblProdottoScelto.setText(dati[0] + "  [" + skuSelezionato + "]");
         lblDisponibilitaCorrente.setText("Disponibilità attuale: " + dati[1] + " unità");
         lblSogliaMinima.setText("Soglia minima: " + dati[2] + " unità");
     }
 
-    // ── Logica conferma scarico
     private void onConferma() {
-        // Validazione: prodotto selezionato
+        // verifica che l'utente abbia selezionato un prodotto
         if (skuSelezionato == null) {
             JOptionPane.showMessageDialog(this,
                     "Seleziona un prodotto dalla lista prima di confermare.",
@@ -254,7 +236,7 @@ public class RegistraScarico extends JFrame {
             return;
         }
 
-        // Validazione: quantità numerica positiva
+        // verifica che la quantità sia un intero positivo
         String qtyStr = txtQuantita.getText().trim();
         int quantita;
         try {
@@ -267,55 +249,47 @@ public class RegistraScarico extends JFrame {
             return;
         }
 
-        String[] dati          = catalogo.get(skuSelezionato);
-        int disponibile        = Integer.parseInt(dati[1]);
-        int sogliaMin          = Integer.parseInt(dati[2]);
+        String[] dati   = catalogo.get(skuSelezionato);
+        int disponibile = Integer.parseInt(dati[1]);
+        int sogliaMin   = Integer.parseInt(dati[2]);
 
-
-        // Controllo: quantità richiesta > disponibile → blocca l'operazione.
-        // L'operatore vede solo che l'operazione è annullata; la notifica al
-        // responsabile avviene in background senza mostrare nulla all'operatore.
-        // PRIMA: notificaResponsabile(...) mostrava un JOptionPane con parent=this
-        //        (visibile all'operatore) e nel testo diceva "il responsabile è stato notificato".
-        // DOPO: JOptionPane pulito solo per l'operatore + chiamata silenziosa in background.
+        // se la quantità richiesta supera la disponibilità l'operazione viene bloccata
+        // il responsabile viene avvisato in background senza mostrare nulla all'operatore
         if (quantita > disponibile) {
             JOptionPane.showMessageDialog(this,
                     "Lo scarico di " + quantita + " unità di \"" + dati[0] + "\" supera\n" +
-                            "la disponibilità attuale (" + disponibile + " unità).\n\n" +
-                            "Operazione ANNULLATA.",
+                            "la disponibilità attuale (" + disponibile + " unità).\n\nOperazione ANNULLATA.",
                     "Scorte insufficienti", JOptionPane.ERROR_MESSAGE);
             notificaResponsabileInBackground(dati[0], disponibile, -1);
             return;
         }
 
-
-        // Aggiorna disponibilità
         int nuovaQty = disponibile - quantita;
 
         try {
+            // aggiorna la quantità nel DB tramite il controller
             ProdottoController controller = new ProdottoController();
             boolean savingOK = controller.aggiornaQuantitaProdotto(skuSelezionato, nuovaQty);
 
-            if(!savingOK){
-                JOptionPane.showMessageDialog(this, "Errore in fase di aggiornameto scorte");
+            if (!savingOK) {
+                JOptionPane.showMessageDialog(this, "Errore in fase di aggiornamento scorte");
                 return;
             }
 
+            // registra il movimento di scarico nel DB
             Movimento movimentoScarico = new Movimento(
                     quantita, new Date(System.currentTimeMillis()),
-                    "Scarico", skuSelezionato,
-                    operatoreLoggato.getID_Utenete()
+                    "Scarico", skuSelezionato, operatoreLoggato.getID_Utenete()
             );
-
             new MovimentoDAO().inserisciMovimento(movimentoScarico);
-        } catch (Exception ex){
-            JOptionPane.showMessageDialog(this,"Errore DB: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
+
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Errore DB: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
+        // aggiorna il catalogo in memoria e la voce nella JList
         dati[1] = String.valueOf(nuovaQty);
-
-        // Aggiorna voce nella JList
         int idx = productList.getSelectedIndex();
         listModel.set(idx, buildVoceList(skuSelezionato, dati));
         lblDisponibilitaCorrente.setText("Disponibilità attuale: " + dati[1] + " unità");
@@ -325,30 +299,17 @@ public class RegistraScarico extends JFrame {
                         "Nuova disponibilità: " + nuovaQty + " unità.",
                 "Scarico completato", JOptionPane.INFORMATION_MESSAGE);
 
-
-        // Controllo soglia minima: se la disponibilità residua scende sotto soglia,
-        // il responsabile viene notificato in background.
-        // L'operatore NON vede alcun dialogo: la gestione del riordino non gli compete.
-        // PRIMA: notificaResponsabile(...) mostrava un JOptionPane all'operatore.
-        // DOPO:  chiamata silenziosa a notificaResponsabileInBackground().
+        // se la disponibilità residua è scesa sotto la soglia, avvisa il responsabile in background
+        // l'operatore non vede nessun dialogo: la gestione del riordino non è di sua competenza
         if (nuovaQty < sogliaMin) {
             notificaResponsabileInBackground(dati[0], nuovaQty, sogliaMin);
         }
 
-
         txtQuantita.setText("");
     }
 
-    // ── MODIFICA 3 ────────────────────────────────────────────────────────────
-    /**
-     * Invia la notifica al responsabile senza mostrare alcun dialogo all'operatore.
-     * In produzione sostituire il log con una chiamata al servizio di notifica reale
-     * (REST endpoint, email, push notification, ecc.).
-     *
-     * @param nomeProdotto  Nome del prodotto coinvolto
-     * @param qtaAttuale    Quantità attuale residua in magazzino
-     * @param sogliaMinima  Soglia minima configurata; -1 indica "scorte esaurite"
-     */
+    // invia la notifica al responsabile senza mostrare nulla all'operatore
+    // in produzione va sostituito con una chiamata a un servizio reale (REST, email, ecc.)
     private void notificaResponsabileInBackground(String nomeProdotto, int qtaAttuale, int sogliaMinima) {
         String messaggio;
         if (sogliaMinima < 0) {
@@ -361,9 +322,8 @@ public class RegistraScarico extends JFrame {
         // TODO: sostituire con chiamata al servizio di notifica reale
         System.out.println("[NOTIFICA RESPONSABILE] " + messaggio);
     }
-    // ── FINE MODIFICA 3
 
-    // ── Builders bottoni
+    // bottone pieno blu: usato per l'azione principale
     private JButton buildPrimaryButton(String testo) {
         JButton btn = new JButton(testo) {
             private boolean hovered = false;
@@ -394,6 +354,7 @@ public class RegistraScarico extends JFrame {
         return btn;
     }
 
+    // bottone solo bordo: usato per le azioni secondarie come "torna indietro"
     private JButton buildSecondaryButton(String testo) {
         JButton btn = new JButton(testo) {
             private boolean hovered = false;
@@ -426,7 +387,6 @@ public class RegistraScarico extends JFrame {
         return btn;
     }
 
-    // ── Helpers
     private JLabel sectionLabel(String testo) {
         JLabel l = new JLabel(testo);
         l.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -435,6 +395,7 @@ public class RegistraScarico extends JFrame {
         return l;
     }
 
+    // applica lo stile uniforme ai campi di testo
     private void stilizza(JTextField c) {
         c.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         c.setAlignmentX(Component.LEFT_ALIGNMENT);

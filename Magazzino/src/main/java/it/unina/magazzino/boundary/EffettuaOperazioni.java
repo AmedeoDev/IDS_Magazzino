@@ -19,6 +19,7 @@ public class EffettuaOperazioni extends JFrame {
 
     public EffettuaOperazioni(Operatore operatore) {
 
+        // salva l'operatore loggato per passarlo alle schermate successive
         this.operatoreCorrente = operatore;
         setTitle("WMS PRO – Gestione Movimenti");
         setSize(440, 480);
@@ -29,7 +30,6 @@ public class EffettuaOperazioni extends JFrame {
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(StyleWMS.BIANCO);
 
-        /* ── Header ── */
         JPanel header = new JPanel();
         header.setBackground(StyleWMS.BLU_ACCIAIO);
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -49,13 +49,12 @@ public class EffettuaOperazioni extends JFrame {
         header.add(Box.createVerticalStrut(4));
         header.add(sub);
 
-        /* ── Corpo Centrale / Selezione Opzioni ── */
         JPanel body = new JPanel();
         body.setBackground(StyleWMS.BIANCO);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(new EmptyBorder(40, 50, 30, 50));
 
-        // Bottone CARICO
+        // bottone carico: cambia colore al passaggio del mouse
         btnCarico = new JButton("REGISTRA CARICO") {
             private boolean hovered = false;
             {
@@ -86,7 +85,7 @@ public class EffettuaOperazioni extends JFrame {
 
         body.add(Box.createVerticalStrut(20));
 
-        // Bottone SCARICO
+        // bottone scarico: stesso stile del carico
         btnScarico = new JButton("REGISTRA SCARICO") {
             private boolean hovered = false;
             {
@@ -117,7 +116,7 @@ public class EffettuaOperazioni extends JFrame {
 
         body.add(Box.createVerticalStrut(45));
 
-        // Bottone per tornare alla Dashboard
+        // bottone secondario con bordo: porta alla dashboard senza registrare nulla
         btnDashboard = new JButton("Torna alla Dashboard") {
             private boolean hovered = false;
             {
@@ -152,21 +151,19 @@ public class EffettuaOperazioni extends JFrame {
         root.add(body, BorderLayout.CENTER);
         setContentPane(root);
 
-        /* ── Logica di Navigazione ── */
-
-        // Apre la schermata di Carico
+        // apre la schermata di registrazione carico passando l'operatore corrente
         btnCarico.addActionListener(e -> {
             this.dispose();
             new RegistraCarico(this.operatoreCorrente).setVisible(true);
         });
 
-        // Apre la schermata di Scarico
+        // apre la schermata di registrazione scarico passando l'operatore corrente
         btnScarico.addActionListener(e -> {
             this.dispose();
             new RegistraScarico(this.operatoreCorrente).setVisible(true);
         });
 
-        // Ritorna alla Dashboard dell'operatore
+        // torna alla dashboard dell'operatore senza registrare alcun movimento
         btnDashboard.addActionListener(e -> {
             this.dispose();
             DashboardOperatore dashboardOperatore = new DashboardOperatore(this.operatoreCorrente, "resources/assets/logoFinale.png");
@@ -176,18 +173,10 @@ public class EffettuaOperazioni extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-
             Operatore opTest = new Operatore(
-                    "Amedeo",
-                    "catanese",
-                    "am@mail.it",
-                    "testpw",
-                    "TEST-002"
-
+                    "Amedeo", "catanese", "am@mail.it", "testpw", "TEST-002"
             );
-
             new EffettuaOperazioni(opTest).setVisible(true);
-
         });
     }
 }

@@ -8,27 +8,19 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.*;
-
 import java.util.List;
 
-/**
- * Pannello "Andamento Magazzino" — RF13 / RF14
- *
- * Funzionalità:
- *  - Grafici andamento movimenti (carichi/scarichi) negli ultimi 7 giorni (RF13)
- *  - Prodotti più movimentati nel periodo (RF13)
- *  - Indicatori riepilogo: operazioni totali, operatori attivi (RF14)
- *  - Selettore periodo: 7 giorni / 30 giorni / 90 giorni
- */
 public class AndamentoMagazzino extends JPanel {
 
     private BarChartPanel barChart;
     private JLabel lblPeriodo;
-    private int periodoSelezionato = 7; // default 7 gg
+    // periodo selezionato in giorni: default 7
+    private int periodoSelezionato = 7;
 
-
+    // label KPI aggiornate da aggiornaVista() ad ogni cambio periodo
     private JLabel kpiTotLbl, kpiOpeLbl;
 
+    // pannello che ospita il grafico "prodotti più movimentati": svuotato e ricreato ad ogni aggiornamento
     private JPanel topProdottiPanel;
 
     public AndamentoMagazzino() {
@@ -62,10 +54,10 @@ public class AndamentoMagazzino extends JPanel {
         scroll.getVerticalScrollBar().setUnitIncrement(14);
         add(scroll, BorderLayout.CENTER);
 
+        // carica i dati iniziali con il periodo di default (7 giorni)
         aggiornaVista();
     }
 
-    // ── Header + selettore periodo ───────────────────────────────
     private JPanel buildHeader() {
         JPanel wrap = new JPanel(new BorderLayout());
         wrap.setOpaque(false);
@@ -74,7 +66,7 @@ public class AndamentoMagazzino extends JPanel {
         sezione.setFont(new Font("SansSerif", Font.BOLD, 10));
         sezione.setForeground(new Color(0x88, 0x88, 0x88));
 
-        // Toggle periodo
+        // toggle per selezionare il periodo: 7 / 30 / 90 giorni
         JPanel toggle = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         toggle.setOpaque(false);
 
@@ -83,12 +75,14 @@ public class AndamentoMagazzino extends JPanel {
             JButton btn = buildToggleButton(p, gg == periodoSelezionato);
             btn.addActionListener(e -> {
                 periodoSelezionato = gg;
+                // ricarica tutti i dati con il nuovo periodo
                 aggiornaVista();
+                // aggiorna lo stile dei bottoni: solo quello selezionato rimane blu
                 for (Component c : toggle.getComponents()) {
                     if (c instanceof JButton b) {
-                        int bg2 = Integer.parseInt(b.getActionCommand());
+                        int bg2  = Integer.parseInt(b.getActionCommand());
                         boolean sel2 = bg2 == periodoSelezionato;
-                        b.setBackground(sel2 ? StyleWMS.BLU_ACCIAIO : new Color(230,236,244));
+                        b.setBackground(sel2 ? StyleWMS.BLU_ACCIAIO : new Color(230, 236, 244));
                         b.setForeground(sel2 ? Color.WHITE : StyleWMS.BLU_ACCIAIO);
                     }
                 }
@@ -112,7 +106,8 @@ public class AndamentoMagazzino extends JPanel {
             }
         };
         btn.setFont(new Font("SansSerif", Font.BOLD, 11));
-        btn.setBackground(attivo ? StyleWMS.BLU_ACCIAIO : new Color(230,236,244));
+        // il bottone attivo ha sfondo blu pieno, gli altri sfondo grigio chiaro
+        btn.setBackground(attivo ? StyleWMS.BLU_ACCIAIO : new Color(230, 236, 244));
         btn.setForeground(attivo ? Color.WHITE : StyleWMS.BLU_ACCIAIO);
         btn.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(StyleWMS.AZZURRO_LIGHT, 1, true),
@@ -120,13 +115,13 @@ public class AndamentoMagazzino extends JPanel {
         return btn;
     }
 
-    // ── KPI row ──────────────────────────────────────────────────
     private JPanel buildKpiRow() {
         JPanel row = new JPanel(new GridLayout(1, 2, 12, 0));
         row.setOpaque(false);
         row.setAlignmentX(Component.LEFT_ALIGNMENT);
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 85));
 
+        // le label vengono aggiornate da aggiornaVista() ad ogni cambio periodo
         kpiTotLbl = kpiLbl("...", StyleWMS.BLU_ACCIAIO);
         kpiOpeLbl = kpiLbl("...", new Color(46, 125, 50));
 
@@ -169,7 +164,6 @@ public class AndamentoMagazzino extends JPanel {
         return card;
     }
 
-    // ── Grafico a barre carichi/scarichi ─────────────────────────
     private JPanel buildBarChartSection() {
         DashboardOperatore.RoundPanel panel =
                 new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
@@ -185,14 +179,16 @@ public class AndamentoMagazzino extends JPanel {
         titolo.setFont(new Font("SansSerif", Font.BOLD, 13));
         titolo.setForeground(StyleWMS.BLU_ACCIAIO);
 
+        // legenda colori: blu per i carichi, verde per gli scarichi
         JPanel legenda = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         legenda.setOpaque(false);
         legenda.add(chipLegenda(StyleWMS.BLU_ACCIAIO, "Carichi"));
-        legenda.add(chipLegenda(new Color(46,125,50), "Scarichi"));
+        legenda.add(chipLegenda(new Color(46, 125, 50), "Scarichi"));
 
         titoloRiga.add(titolo, BorderLayout.WEST);
         titoloRiga.add(legenda, BorderLayout.EAST);
 
+        // il grafico parte vuoto e viene popolato da aggiornaVista()
         barChart = new BarChartPanel(new String[0], new int[0], new int[0]);
         barChart.setPreferredSize(new Dimension(0, 180));
 
@@ -208,7 +204,7 @@ public class AndamentoMagazzino extends JPanel {
         l.setIcon(new Icon() {
             public void paintIcon(Component c, Graphics g, int x, int y) {
                 g.setColor(col);
-                g.fillRoundRect(x, y+2, 10, 10, 3, 3);
+                g.fillRoundRect(x, y + 2, 10, 10, 3, 3);
             }
             public int getIconWidth()  { return 12; }
             public int getIconHeight() { return 14; }
@@ -216,6 +212,7 @@ public class AndamentoMagazzino extends JPanel {
         return l;
     }
 
+    // costruisce le barre orizzontali proporzionali per i prodotti più movimentati
     private JPanel buildBarreTop(List<String[]> top) {
         JPanel barre = new JPanel();
         barre.setOpaque(false);
@@ -232,6 +229,7 @@ public class AndamentoMagazzino extends JPanel {
         Color[] colori = {StyleWMS.BLU_ACCIAIO, StyleWMS.BLU_MEDIO,
                 new Color(46, 125, 50), new Color(123, 31, 162), new Color(180, 60, 10)};
 
+        // il primo prodotto ha il valore massimo: usato come riferimento per le proporzioni
         int max = Integer.parseInt(top.get(0)[1]);
         for (int i = 0; i < top.size(); i++) {
             int valore = Integer.parseInt(top.get(i)[1]);
@@ -252,13 +250,16 @@ public class AndamentoMagazzino extends JPanel {
         nomeLbl.setForeground(StyleWMS.GRIGIO_TESTO);
         nomeLbl.setPreferredSize(new Dimension(160, 20));
 
+        // percentuale rispetto al prodotto più movimentato per calcolare la larghezza della barra
         final float pct = max > 0 ? (float) valore / max : 0;
         JPanel barra = new JPanel() {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // sfondo grigio chiaro per la barra vuota
                 g2.setColor(new Color(230, 235, 245));
                 g2.fill(new RoundRectangle2D.Float(0, 2, getWidth(), getHeight() - 4, 6, 6));
+                // parte colorata proporzionale al valore
                 int w = (int) (getWidth() * pct);
                 if (w > 0) {
                     g2.setColor(colore);
@@ -276,34 +277,36 @@ public class AndamentoMagazzino extends JPanel {
         valLbl.setHorizontalAlignment(SwingConstants.RIGHT);
 
         row.add(nomeLbl, BorderLayout.WEST);
-        row.add(barra, BorderLayout.CENTER);
-        row.add(valLbl, BorderLayout.EAST);
+        row.add(barra,   BorderLayout.CENTER);
+        row.add(valLbl,  BorderLayout.EAST);
         return row;
     }
 
-
-    // ── Aggiorna dati al cambio periodo ─────────────────────────
+    // aggiorna KPI, grafico a barre e lista prodotti più movimentati in base al periodo selezionato
     private void aggiornaVista() {
-
         MovimentoController controller = new MovimentoController();
 
+        // aggiorna le KPI card con i contatori del periodo
         kpiTotLbl.setText(String.valueOf(controller.countMovimentiPeriodo(periodoSelezionato)));
         kpiOpeLbl.setText(String.valueOf(controller.countOperatoriDistantiPeriodo(periodoSelezionato)));
 
+        // recupera i dati aggregati per il grafico (granularità dipende dal periodo)
         List<String[]> dati = controller.getDatiGrafico(periodoSelezionato);
-        if(!dati.isEmpty()){
+        if (!dati.isEmpty()) {
             String[] etichetta = dati.stream().map(r -> r[0]).toArray(String[]::new);
-            int[] carichi = dati.stream().mapToInt(r -> Integer.parseInt(r[1])).toArray();
+            int[] carichi  = dati.stream().mapToInt(r -> Integer.parseInt(r[1])).toArray();
             int[] scarichi = dati.stream().mapToInt(r -> Integer.parseInt(r[2])).toArray();
             barChart.setDati(etichetta, carichi, scarichi);
         } else {
             barChart.setDati(new String[]{"Nessun dato"}, new int[0], new int[0]);
         }
 
+        // recupera i 5 prodotti più movimentati e ricostruisce il pannello
         List<String[]> top = controller.getProdottiMovimentati(5, periodoSelezionato);
         topProdottiPanel.removeAll();
 
-        DashboardOperatore.RoundPanel wrapper = new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
+        DashboardOperatore.RoundPanel wrapper =
+                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, StyleWMS.AZZURRO_LIGHT, 10);
         wrapper.setLayout(new BorderLayout(0, 10));
         wrapper.setBorder(new EmptyBorder(16, 16, 16, 16));
 
@@ -313,14 +316,12 @@ public class AndamentoMagazzino extends JPanel {
         wrapper.add(buildBarreTop(top), BorderLayout.CENTER);
 
         topProdottiPanel.add(wrapper, BorderLayout.CENTER);
+        // forza il ridisegno dopo aver sostituito il contenuto
         topProdottiPanel.revalidate();
         topProdottiPanel.repaint();
-
     }
 
-    // ══════════════════════════════════════════════════════════════
-    // Componente grafico a barre doppia (Carichi / Scarichi)
-    // ══════════════════════════════════════════════════════════════
+    // componente grafico a barre doppie (carichi/scarichi) disegnato con Graphics2D
     static class BarChartPanel extends JPanel {
 
         private String[] etichette;
@@ -343,6 +344,7 @@ public class AndamentoMagazzino extends JPanel {
             setOpaque(false);
         }
 
+        // aggiorna i dati e forza il ridisegno
         void setDati(String[] etichette, int[] carichi, int[] scarichi) {
             this.etichette = etichette;
             this.carichi   = carichi;
@@ -354,30 +356,34 @@ public class AndamentoMagazzino extends JPanel {
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
 
-            if(etichette == null || etichette.length == 0 || carichi == null || carichi.length == 0 || scarichi == null || scarichi.length == 0) return;
-
+            // non disegna nulla se i dati non sono ancora disponibili
+            if (etichette == null || etichette.length == 0
+                    || carichi == null || carichi.length == 0
+                    || scarichi == null || scarichi.length == 0) return;
 
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 
-            int W = getWidth();
-            int H = getHeight();
+            int W      = getWidth();
+            int H      = getHeight();
             int chartW = W - PAD_LEFT - PAD_RIGHT;
             int chartH = H - PAD_BOTTOM - PAD_TOP;
 
+            // calcola il valore massimo tra carichi e scarichi per scalare le barre
             int maxV = 1;
             for (int v : carichi)  maxV = Math.max(maxV, v);
             for (int v : scarichi) maxV = Math.max(maxV, v);
-            maxV = (int)(maxV * 1.15);
+            maxV = (int) (maxV * 1.15); // margine del 15% in cima
 
-            int n = etichette.length;
-            int groupW = n > 1 ? (chartW - GROUP_GAP * (n-1)) / n : chartW;
+            int n      = etichette.length;
+            int groupW = n > 1 ? (chartW - GROUP_GAP * (n - 1)) / n : chartW;
             int barW   = (groupW - BAR_GAP) / 2;
 
+            // disegna le linee guida orizzontali e le etichette dell'asse Y
             g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
             for (int step = 0; step <= 4; step++) {
-                int yLine = PAD_TOP + chartH - (int)((float) step / 4 * chartH);
+                int yLine  = PAD_TOP + chartH - (int) ((float) step / 4 * chartH);
                 int valLine = maxV * step / 4;
                 g2.setColor(new Color(220, 225, 235));
                 g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND,
@@ -388,20 +394,24 @@ public class AndamentoMagazzino extends JPanel {
                 g2.drawString(String.valueOf(valLine), 2, yLine + 4);
             }
 
+            // disegna le coppie di barre (carico + scarico) per ogni gruppo
             for (int i = 0; i < n; i++) {
                 int x0 = PAD_LEFT + i * (groupW + GROUP_GAP);
 
-                int hC = (int)((float) carichi[i] / maxV * chartH);
+                // barra carico (sinistra del gruppo)
+                int hC = (int) ((float) carichi[i] / maxV * chartH);
                 int yC = PAD_TOP + chartH - hC;
                 g2.setColor(COL_CARICO);
                 g2.fill(new RoundRectangle2D.Float(x0, yC, barW, hC, 4, 4));
 
-                int hS = (int)((float) scarichi[i] / maxV * chartH);
+                // barra scarico (destra del gruppo)
+                int hS = (int) ((float) scarichi[i] / maxV * chartH);
                 int yS = PAD_TOP + chartH - hS;
                 g2.setColor(COL_SCARICO);
                 g2.fill(new RoundRectangle2D.Float(x0 + barW + BAR_GAP, yS, barW, hS, 4, 4));
 
-                g2.setColor(new Color(120,120,120));
+                // etichetta sull'asse X centrata sotto il gruppo
+                g2.setColor(new Color(120, 120, 120));
                 g2.setFont(new Font("SansSerif", Font.PLAIN, 9));
                 FontMetrics fm = g2.getFontMetrics();
                 String lbl = etichette[i];
@@ -409,6 +419,7 @@ public class AndamentoMagazzino extends JPanel {
                 g2.drawString(lbl, lx, PAD_TOP + chartH + 16);
             }
 
+            // assi del grafico
             g2.setColor(new Color(200, 205, 215));
             g2.setStroke(new BasicStroke(1));
             g2.drawLine(PAD_LEFT, PAD_TOP, PAD_LEFT, PAD_TOP + chartH);

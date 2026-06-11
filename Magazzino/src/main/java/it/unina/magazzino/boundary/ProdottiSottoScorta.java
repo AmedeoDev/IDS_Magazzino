@@ -16,21 +16,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.RoundRectangle2D;
 
-/**
- * Pannello "Prodotti Sotto Scorta" — RF10 / RF08
- *
- * Funzionalità:
- *  - Lista prodotti con quantità inferiore alla soglia minima (RF10)
- *  - Indicatore visivo della criticità (livello basso / critico)
- *  - Azione "Riordina" per avviare un ordine di rifornimento (RF08)
- *  - Riepilogo KPI: totale sotto scorta, media scarto, prodotto più critico
- *
- * Notifiche:
- *  - Quando si riordina un singolo prodotto, risale alla DashboardResponsabile
- *    tramite SwingUtilities.getWindowAncestor() e chiama decrementaNotifica()
- *  - Quando si riordinano tutti i prodotti, chiama azzeraNotifiche()
- *  - Il costruttore rimane invariato (nessun parametro aggiuntivo)
- */
 public class ProdottiSottoScorta extends JPanel {
 
     private DefaultTableModel tableModel;
@@ -40,7 +25,6 @@ public class ProdottiSottoScorta extends JPanel {
             "ID", "Nome Prodotto", "Categoria", "Disponibile", "Soglia Min.", "Scarto", "Livello", "Azione"
     };
 
-    // ── Costruttore invariato: nessun parametro aggiuntivo ────────
     public ProdottiSottoScorta() {
         setOpaque(false);
         setLayout(new BorderLayout(0, 14));
@@ -51,20 +35,17 @@ public class ProdottiSottoScorta extends JPanel {
         add(buildBottomActions(), BorderLayout.SOUTH);
     }
 
-    // ── Metodo helper: recupera la DashboardResponsabile dalla gerarchia Swing ──
-    // SwingUtilities.getWindowAncestor() risale la catena padre→finestra
-    // senza che ProdottiSottoScorta debba tenere un riferimento esplicito.
-    // Restituisce null se il pannello non è ancora agganciato a una finestra
-    // o se la finestra padre non è una DashboardResponsabile.
+    // risale la gerarchia Swing per trovare la DashboardResponsabile padre
+    // usato per aggiornare il badge notifiche nella sidebar senza tenere un riferimento esplicito
     private DashboardResponsabile getDashboard() {
         Window w = SwingUtilities.getWindowAncestor(this);
         if (w instanceof DashboardResponsabile) {
             return (DashboardResponsabile) w;
         }
+        // restituisce null se il pannello non è ancora agganciato a una DashboardResponsabile
         return null;
     }
 
-    // ── Header: sezione label + KPI strip
     private JPanel buildHeader() {
         JPanel wrap = new JPanel();
         wrap.setOpaque(false);
@@ -77,49 +58,54 @@ public class ProdottiSottoScorta extends JPanel {
         wrap.add(sezione);
         wrap.add(Box.createVerticalStrut(10));
 
-        // KPI
-
+        // carica la lista una sola volta per calcolare tutte le KPI
         List<Prodotto> sottoScorta = caricaProdottiSottoScorta();
 
         int totale = sottoScorta.size();
 
+        // calcola lo scarto medio (quantità attuale - soglia) su tutti i prodotti critici
         double scartoMedio = 0;
-        if(totale > 0){
+        if (totale > 0) {
             int sommaScarto = 0;
-            for(Prodotto p : sottoScorta){
+            for (Prodotto p : sottoScorta) {
                 sommaScarto += (p.getQtaDisponibile() - p.getSogliaMinima());
                 scartoMedio = (double) sommaScarto / totale;
             }
         }
 
-        Prodotto pCritico = null;
-        int worstScarto = 0;
-        for(Prodotto p : sottoScorta){
+        // trova il prodotto con lo scarto peggiore (quello più lontano dalla soglia)
+        Prodotto pCritico   = null;
+        int      worstScarto = 0;
+        for (Prodotto p : sottoScorta) {
             int scarto = p.getQtaDisponibile() - p.getSogliaMinima();
-            if(pCritico == null || scarto < worstScarto){
-                pCritico = p;
+            if (pCritico == null || scarto < worstScarto) {
+                pCritico    = p;
                 worstScarto = scarto;
             }
         }
 
-        String labelCritico = pCritico != null ? pCritico.getNome() + "( " + worstScarto + " )" : "Nessuno";
-
+        String labelCritico = pCritico != null
+                ? pCritico.getNome() + "( " + worstScarto + " )"
+                : "Nessuno";
 
         JPanel kpiRow = new JPanel(new GridLayout(1, 3, 12, 0));
         kpiRow.setOpaque(false);
         kpiRow.setAlignmentX(Component.LEFT_ALIGNMENT);
         kpiRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
 
-        kpiRow.add(buildKpiCard("Prodotti sotto scorta", String.valueOf(totale),  new Color(198,40,40)));
-        kpiRow.add(buildKpiCard("Scarto medio",          String.format("%.1f", scartoMedio), new Color(180,60,10)));
-        kpiRow.add(buildKpiCard("Prodotto più critico",  labelCritico, StyleWMS.BLU_MEDIO));
+        kpiRow.add(buildKpiCard("Prodotti sotto scorta", String.valueOf(totale),        new Color(198, 40, 40)));
+        kpiRow.add(buildKpiCard("Scarto medio",          String.format("%.1f", scartoMedio), new Color(180, 60, 10)));
+        kpiRow.add(buildKpiCard("Prodotto più critico",  labelCritico,                 StyleWMS.BLU_MEDIO));
 
         wrap.add(kpiRow);
         wrap.add(Box.createVerticalStrut(10));
 
-        long numCritici = sottoScorta.stream().filter(p -> (p.getQtaDisponibile() - p.getSogliaMinima()) <= -5).count();
+        // conta quanti prodotti hanno uno scarto <= -5 (considerati critici)
+        long numCritici = sottoScorta.stream()
+                .filter(p -> (p.getQtaDisponibile() - p.getSogliaMinima()) <= -5)
+                .count();
 
-        // Banner avviso
+        // banner di avviso giallo mostrato sempre, con testo diverso in base alla criticità
         JPanel banner = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
         banner.setOpaque(false);
         banner.setBackground(new Color(255, 243, 205));
@@ -129,7 +115,9 @@ public class ProdottiSottoScorta extends JPanel {
         JLabel iconaAvviso = new JLabel("⚠");
         iconaAvviso.setFont(new Font("SansSerif", Font.PLAIN, 14));
         iconaAvviso.setForeground(new Color(180, 100, 0));
-        JLabel testoAvviso = new JLabel(numCritici > 0 ? "Attenzione: " + numCritici + " prodotti" + (numCritici == 1 ? " o è" : "i sono") : "Tutti i prodotti sono sotto soglia minima ma non in stato critico!");
+        JLabel testoAvviso = new JLabel(numCritici > 0
+                ? "Attenzione: " + numCritici + " prodotti" + (numCritici == 1 ? " o è" : "i sono")
+                : "Tutti i prodotti sono sotto soglia minima ma non in stato critico!");
         testoAvviso.setFont(new Font("SansSerif", Font.PLAIN, 12));
         testoAvviso.setForeground(new Color(130, 70, 0));
         banner.add(iconaAvviso);
@@ -141,16 +129,17 @@ public class ProdottiSottoScorta extends JPanel {
         return wrap;
     }
 
-    private List<Prodotto> caricaProdottiSottoScorta(){
+    // carica dal DB solo i prodotti con isSottoScorta() == true (filtro lato client)
+    private List<Prodotto> caricaProdottiSottoScorta() {
         try {
             List<Prodotto> prodotti = new ProdottoController().getAllProdotti();
-            if(prodotti == null) return new ArrayList<>();
+            if (prodotti == null) return new ArrayList<>();
             List<Prodotto> risultato = new ArrayList<>();
-            for(Prodotto p : prodotti){
-                if(p.isSottoScorta()) risultato.add(p);
+            for (Prodotto p : prodotti) {
+                if (p.isSottoScorta()) risultato.add(p);
             }
             return risultato;
-        } catch (Exception e){
+        } catch (Exception e) {
             System.out.println("[ SottoScorta ] errore caricaProdottiSottoScorta: " + e.getMessage());
             return new ArrayList<>();
         }
@@ -158,7 +147,7 @@ public class ProdottiSottoScorta extends JPanel {
 
     private JPanel buildKpiCard(String label, String valore, Color colore) {
         DashboardOperatore.RoundPanel card =
-                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, new Color(198,40,40,50), 10);
+                new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, new Color(198, 40, 40, 50), 10);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(new EmptyBorder(12, 14, 12, 14));
 
@@ -176,35 +165,31 @@ public class ProdottiSottoScorta extends JPanel {
         return card;
     }
 
-    // ── Tabella prodotti sotto scorta
     private JPanel buildTablePanel() {
         DashboardOperatore.RoundPanel panel =
                 new DashboardOperatore.RoundPanel(StyleWMS.BIANCO, new Color(198, 40, 40, 40), 10);
         panel.setLayout(new BorderLayout());
         panel.setBorder(new EmptyBorder(12, 12, 12, 12));
 
+        // tabella non editabile: le azioni passano solo dal click sulla colonna "Azione"
         tableModel = new DefaultTableModel(new Object[][]{}, COLONNE) {
             public boolean isCellEditable(int r, int c) { return false; }
         };
 
-
+        // popola la tabella calcolando lo scarto e il livello per ogni prodotto
         List<Prodotto> sottoScorta = caricaProdottiSottoScorta();
-        for(Prodotto p : sottoScorta){
-            int scarto = p.getQtaDisponibile() - p.getSogliaMinima();
+        for (Prodotto p : sottoScorta) {
+            int scarto   = p.getQtaDisponibile() - p.getSogliaMinima();
+            // critico se lo scarto è <= -5, altrimenti solo "basso"
             String livello = scarto <= -5 ? "Critico" : "Basso";
             tableModel.addRow(new Object[]{
-                    p.getID(),
-                    p.getNome(),
-                    p.getCategoria(),
+                    p.getID(), p.getNome(), p.getCategoria(),
                     String.valueOf(p.getQtaDisponibile()),
                     String.valueOf(p.getSogliaMinima()),
                     String.valueOf(scarto),
-                    livello,
-                    "Riordina"
+                    livello, "Riordina"
             });
         }
-
-
 
         tabella = new JTable(tableModel);
         tabella.setFont(new Font("SansSerif", Font.PLAIN, 12));
@@ -220,12 +205,11 @@ public class ProdottiSottoScorta extends JPanel {
         tabella.setSelectionForeground(new Color(160, 30, 30));
         tabella.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-        // Larghezze colonne
         int[] widths = {70, 160, 110, 80, 85, 60, 80, 90};
         for (int i = 0; i < widths.length; i++)
             tabella.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
 
-        // Renderer colonna "Livello" → badge colorato
+        // renderer colonna "Livello": rosso pieno per critico, giallo per basso
         tabella.getColumnModel().getColumn(6).setCellRenderer(
                 new javax.swing.table.DefaultTableCellRenderer() {
                     @Override
@@ -249,7 +233,7 @@ public class ProdottiSottoScorta extends JPanel {
                     }
                 });
 
-        // Renderer colonna "Azione" → bottone simulato
+        // renderer colonna "Azione": simula l'aspetto di un bottone cliccabile
         tabella.getColumnModel().getColumn(7).setCellRenderer(
                 new javax.swing.table.DefaultTableCellRenderer() {
                     @Override
@@ -267,17 +251,18 @@ public class ProdottiSottoScorta extends JPanel {
                     }
                 });
 
-        // ── Click su colonna "Azione": riordina il singolo prodotto
+        // click sulla colonna "Azione": avvia il riordino per il singolo prodotto selezionato
         tabella.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 int col = tabella.columnAtPoint(e.getPoint());
                 int row = tabella.rowAtPoint(e.getPoint());
                 if (col == 7 && row >= 0) {
-                    String nomeProd = tableModel.getValueAt(row, 1).toString();
-                    String qty      = tableModel.getValueAt(row, 3).toString();
-                    String sogliaStr   = tableModel.getValueAt(row, 4).toString();
-                    int riordino    = Integer.parseInt(sogliaStr) * 2; // logica placeholder
+                    String nomeProd  = tableModel.getValueAt(row, 1).toString();
+                    String qty       = tableModel.getValueAt(row, 3).toString();
+                    String sogliaStr = tableModel.getValueAt(row, 4).toString();
+                    // logica placeholder: ordina il doppio della soglia minima
+                    int riordino = Integer.parseInt(sogliaStr) * 2;
                     int conferma = JOptionPane.showConfirmDialog(ProdottiSottoScorta.this,
                             "<html>Prodotto: <b>" + nomeProd + "</b><br>" +
                                     "Quantità attuale: <b>" + qty + "</b>  — Soglia: <b>" + sogliaStr + "</b><br><br>" +
@@ -285,19 +270,17 @@ public class ProdottiSottoScorta extends JPanel {
                             "Conferma Riordino", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                     if (conferma == JOptionPane.YES_OPTION) {
                         String idProd = tableModel.getValueAt(row, 0).toString();
-                        int soglia = Integer.parseInt(tableModel.getValueAt(row, 4).toString());
-                        new ProdottoController().aggiornaQuantitaProdotto(idProd, soglia*2);
+                        int soglia    = Integer.parseInt(tableModel.getValueAt(row, 4).toString());
+                        new ProdottoController().aggiornaQuantitaProdotto(idProd, soglia * 2);
                         JOptionPane.showMessageDialog(ProdottiSottoScorta.this,
                                 "Ordine di riordino registrato per «" + nomeProd + "» (" + riordino + " unità).",
                                 "Riordino Inviato", JOptionPane.INFORMATION_MESSAGE);
 
-                        // ── Rimozione della riga dalla tabella: il problema è risolto ──
-                        // Convertiamo l'indice dalla view al model (sicuro anche con sorting)
+                        // converte l'indice view → model prima di rimuovere (sicuro anche con sorting)
                         int modelRow = tabella.convertRowIndexToModel(row);
                         tableModel.removeRow(modelRow);
 
-                        // ── Aggiorna il badge nella sidebar: decrementa di 1 ──
-                        // getDashboard() risale la gerarchia Swing senza referenze esplicite
+                        // decrementa di 1 il badge nella sidebar della DashboardResponsabile
                         DashboardResponsabile dash = getDashboard();
                         if (dash != null) {
                             dash.decrementaNotifica();
@@ -313,11 +296,11 @@ public class ProdottiSottoScorta extends JPanel {
         sp.setBorder(null);
         panel.add(sp, BorderLayout.CENTER);
 
-        // Legenda
+        // legenda colori in fondo alla tabella
         JPanel legenda = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 4));
         legenda.setOpaque(false);
-        legenda.add(buildLegendChip(new Color(198,40,40), Color.WHITE, "Critico"));
-        legenda.add(buildLegendChip(new Color(255,243,205), new Color(160,80,0), "Basso"));
+        legenda.add(buildLegendChip(new Color(198, 40, 40), Color.WHITE, "Critico"));
+        legenda.add(buildLegendChip(new Color(255, 243, 205), new Color(160, 80, 0), "Basso"));
         panel.add(legenda, BorderLayout.SOUTH);
         return panel;
     }
@@ -340,12 +323,12 @@ public class ProdottiSottoScorta extends JPanel {
         return l;
     }
 
-    // ── Bottoni fondo
     private JPanel buildBottomActions() {
         JPanel bar = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         bar.setOpaque(false);
 
-        JButton btnTutti = GestisciProdotti.buildPrimaryButton("⟳  Riordina Tutti", new Color(198,40,40));
+        // riordina tutti i prodotti sotto scorta in un'unica operazione
+        JButton btnTutti = GestisciProdotti.buildPrimaryButton("⟳  Riordina Tutti", new Color(198, 40, 40));
         btnTutti.addActionListener(e -> {
             int totale = tableModel.getRowCount();
             if (totale == 0) {
@@ -359,21 +342,19 @@ public class ProdottiSottoScorta extends JPanel {
                     "Riordino Massivo", JOptionPane.INFORMATION_MESSAGE);
 
             ProdottoController controller = new ProdottoController();
-            for(int i = 0; i < totale; ++i){
-                String idProd = tableModel.getValueAt(i, 0).toString();
-                int soglia = Integer.parseInt(tableModel.getValueAt(i, 4).toString());
-                int nuovaQta = soglia*2;
+            for (int i = 0; i < totale; ++i) {
+                String idProd    = tableModel.getValueAt(i, 0).toString();
+                int soglia       = Integer.parseInt(tableModel.getValueAt(i, 4).toString());
+                int nuovaQta     = soglia * 2;
                 controller.aggiornaQuantitaProdotto(idProd, nuovaQta);
             }
 
-            // ── Rimozione di tutte le righe: scorrendo dal fondo evita
-            // problemi di indice durante la rimozione sequenziale
+            // scorre dal fondo per evitare problemi di indice durante la rimozione sequenziale
             for (int i = totale - 1; i >= 0; i--) {
                 tableModel.removeRow(i);
             }
 
-            // ── Azzera il badge notifiche nella sidebar
-            // Tutti i prodotti critici sono stati riordinati
+            // azzera completamente il badge notifiche nella sidebar
             DashboardResponsabile dash = getDashboard();
             if (dash != null) {
                 dash.azzeraNotifiche();
@@ -381,6 +362,7 @@ public class ProdottiSottoScorta extends JPanel {
         });
         bar.add(btnTutti);
 
+        // esporta la tabella corrente in un file Excel
         JButton btnEsporta = GestisciProdotti.buildPrimaryButton("⬇  Esporta Excel", StyleWMS.BLU_MEDIO);
         btnEsporta.addActionListener(e ->
                 ExcelExporter.esporta(this, tableModel, "Prodotti Sotto Scorta", "sotto_scorta"));

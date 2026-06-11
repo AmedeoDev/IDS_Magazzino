@@ -25,18 +25,16 @@ public class VisualizzaStorico extends JFrame {
 
     public VisualizzaStorico(Operatore operatore) {
         this.operatoreLoggato = operatore;
-        // Configurazioni Finestra coerenti con il resto del sistema
+
         setTitle("WMS PRO – Storico Personale Movimenti");
         setSize(520, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Pannello Radice
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(StyleWMS.BIANCO);
 
-        /* ── Header Blu (Stile WMS PRO) ── */
         JPanel header = new JPanel();
         header.setBackground(StyleWMS.BLU_ACCIAIO);
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -56,13 +54,11 @@ public class VisualizzaStorico extends JFrame {
         header.add(Box.createVerticalStrut(4));
         header.add(sub);
 
-        /* ── Contenitore Centrale (Form/Tabella) ── */
         JPanel body = new JPanel();
         body.setBackground(StyleWMS.BIANCO);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(new EmptyBorder(20, 35, 20, 35));
 
-        // Intestazione Sezione Interna
         JLabel lblSezione = new JLabel("Le tue operazioni registrate:");
         lblSezione.setFont(new Font("Segoe UI", Font.BOLD, 14));
         lblSezione.setForeground(StyleWMS.ANTRACITE);
@@ -70,17 +66,13 @@ public class VisualizzaStorico extends JFrame {
         body.add(lblSezione);
         body.add(Box.createVerticalStrut(15));
 
-        /* ── Creazione e Stilizzazione Tabella (Dati mockati di esempio) ── */
         String[] colonne = {"Prodotto", "Tipo", "Quantità", "Data"};
 
-        tableModel = new DefaultTableModel(new Object[][]{}, colonne){
+        // tabella non editabile: l'operatore può solo visualizzare lo storico
+        tableModel = new DefaultTableModel(new Object[][]{}, colonne) {
             @Override
-            public boolean isCellEditable(int row, int col){
-                return false;
-            }
+            public boolean isCellEditable(int row, int col) { return false; }
         };
-
-        tableMovimenti = new JTable(tableModel);
 
         tableMovimenti = new JTable(tableModel);
         tableMovimenti.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -88,9 +80,8 @@ public class VisualizzaStorico extends JFrame {
         tableMovimenti.setGridColor(StyleWMS.AZZURRO_LIGHT);
         tableMovimenti.setSelectionBackground(StyleWMS.AZZURRO_LIGHT);
         tableMovimenti.setSelectionForeground(StyleWMS.ANTRACITE);
-        tableMovimenti.setShowVerticalLines(false); // Design flat moderno senza linee verticali
+        tableMovimenti.setShowVerticalLines(false);
 
-        // Stile Intestazione della Tabella
         JTableHeader tableHeader = tableMovimenti.getTableHeader();
         tableHeader.setFont(new Font("Segoe UI", Font.BOLD, 13));
         tableHeader.setBackground(StyleWMS.GRIGIO_NEUTRO);
@@ -98,34 +89,30 @@ public class VisualizzaStorico extends JFrame {
         tableHeader.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, StyleWMS.AZZURRO_LIGHT));
         tableHeader.setReorderingAllowed(false);
 
-        // ScrollPane per contenere la tabella
         JScrollPane scrollPane = new JScrollPane(tableMovimenti);
         scrollPane.setAlignmentX(Component.LEFT_ALIGNMENT);
         scrollPane.setBorder(BorderFactory.createLineBorder(StyleWMS.AZZURRO_LIGHT));
         scrollPane.getViewport().setBackground(StyleWMS.BIANCO);
         body.add(scrollPane);
 
+        // carica i movimenti dell'operatore loggato dal database
         caricaStoricoDalDB();
 
         body.add(Box.createVerticalStrut(25));
 
-        /* ── Pulsante "Torna alla Home" con Effetto Hover Coordinato ── */
+        // bottone per tornare alla dashboard con effetto hover
         btnIndietro = new JButton("Torna indietro") {
             private boolean hovered = false;
-
             {
                 addMouseListener(new MouseAdapter() {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
                     @Override public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
                 });
             }
-
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Animazione di stato: Scambia tra BLU_MEDIO e BLU_ACCIAIO
                 g2.setColor(hovered ? StyleWMS.BLU_ACCIAIO : StyleWMS.BLU_MEDIO);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
                 g2.dispose();
@@ -142,7 +129,7 @@ public class VisualizzaStorico extends JFrame {
         btnIndietro.setBorderPainted(false);
         btnIndietro.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Listener per la navigazione di ritorno alla HomePage
+        // torna alla dashboard dell'operatore passando l'oggetto operatore corrente
         btnIndietro.addActionListener(e -> {
             this.dispose();
             DashboardOperatore dashboardOperatore = new DashboardOperatore(this.operatoreLoggato, "resources/assets/logoFinale.png");
@@ -151,28 +138,24 @@ public class VisualizzaStorico extends JFrame {
 
         body.add(btnIndietro);
 
-        // Assemblaggio finale dei componenti
         root.add(header, BorderLayout.NORTH);
         root.add(body, BorderLayout.CENTER);
         setContentPane(root);
     }
 
     private void caricaStoricoDalDB() {
-
         tableModel.setRowCount(0);
 
         MovimentoController controller = new MovimentoController();
-
         String idOperatore = operatoreLoggato.getID_Utenete();
 
+        // recupera tutti i movimenti registrati dall'operatore loggato
         List<Movimento> storico = controller.getStoricoPersonale(idOperatore);
 
-        if(storico != null && !storico.isEmpty()){
-
-            for(Movimento m : storico){
-
+        if (storico != null && !storico.isEmpty()) {
+            for (Movimento m : storico) {
+                // mostra nome e ID prodotto insieme per rendere la riga più leggibile
                 String prodottoFormattato = m.getNomeProdotto() + "[ " + m.getIdProdotto() + " ]";
-
                 Object[] riga = {
                         prodottoFormattato,
                         m.getTipoMovimento(),
@@ -182,31 +165,20 @@ public class VisualizzaStorico extends JFrame {
                 tableModel.addRow(riga);
             }
         } else {
-
+            // nessun movimento trovato: mostra un messaggio placeholder nella tabella
             tableModel.addRow(new Object[]{"Nessun movimento registrato", "-", "-", "-"});
-
         }
-
     }
 
     public static void main(String[] args) {
-        // Mock Look and Feel di sistema per coerenza
         try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); }
         catch (Exception ignored) {}
 
         SwingUtilities.invokeLater(() -> {
-
             Operatore operatoreTest = new Operatore(
-                    "Francesco",
-                    "Capasso",
-                    "cap@mail.it",
-                    "pswtest",
-                    "TEST-003"
+                    "Francesco", "Capasso", "cap@mail.it", "pswtest", "TEST-003"
             );
-
             new VisualizzaStorico(operatoreTest).setVisible(true);
-
-
         });
     }
 }
