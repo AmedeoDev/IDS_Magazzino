@@ -6,6 +6,7 @@ import it.unina.magazzino.database.MovimentoDAO;
 import it.unina.magazzino.entity.Movimento;
 import it.unina.magazzino.entity.Operatore;
 import it.unina.magazzino.entity.Prodotto;
+import it.unina.magazzino.observer.NotificaScortaObserver;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -308,6 +309,18 @@ public class RegistraScarico extends JFrame {
             );
 
             new MovimentoDAO().inserisciMovimento(movimentoScarico);
+
+            try {
+                List<Prodotto> tutti = new ProdottoController().getAllProdotti();
+                if(tutti != null){
+                    for(Prodotto p : tutti){
+                        if(p.getID().equals(skuSelezionato) && p.isSottoScorta()){
+                            new NotificaScortaObserver().onProdottoSottoScorta(p);
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception ignored){}
         } catch (Exception ex){
             JOptionPane.showMessageDialog(this,"Errore DB: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
             return;

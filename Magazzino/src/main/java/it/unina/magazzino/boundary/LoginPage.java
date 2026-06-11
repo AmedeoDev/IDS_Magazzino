@@ -4,7 +4,9 @@ import it.unina.magazzino.boundary.utils.StyleWMS;
 
 import it.unina.magazzino.control.LoginController;
 
+import it.unina.magazzino.control.ProdottoController;
 import it.unina.magazzino.entity.Operatore;
+import it.unina.magazzino.entity.Prodotto;
 import it.unina.magazzino.entity.Responsabile;
 import it.unina.magazzino.entity.Utente;
 
@@ -13,6 +15,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LoginPage extends JFrame {
 
@@ -186,6 +190,8 @@ public class LoginPage extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE);
                     DashboardResponsabile dashboardResponsabile = new DashboardResponsabile((Responsabile) utenteLoggato, "");
                     dashboardResponsabile.setVisible(true);
+
+                    SwingUtilities.invokeLater(() -> mostraNotificaSeScenario(dashboardResponsabile));
                 }
 
                 this.dispose(); // chiude solo in caso di successo
@@ -198,6 +204,26 @@ public class LoginPage extends JFrame {
                 txtPassword.requestFocus();
             }
         });
+    }
+
+    private void mostraNotificaSeScenario(DashboardResponsabile dashboardResponsabile) {
+
+        try {
+            List<Prodotto> tutti = new ProdottoController().getAllProdotti();
+            if(tutti == null) return;
+
+            List<Prodotto> prodottiCritici = new ArrayList<>();
+            for(Prodotto p : tutti){
+                if(p.isSottoScorta()) prodottiCritici.add(p);
+            }
+
+            if(!prodottiCritici.isEmpty()){
+                NotificaSottoScorta notifica = new NotificaSottoScorta(dashboardResponsabile, prodottiCritici);
+                notifica.mostra();
+            }
+        } catch (Exception ignored){}
+
+
     }
 
     private JLabel label(String testo) {
