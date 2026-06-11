@@ -1,12 +1,8 @@
 package it.unina.magazzino.boundary;
 
 import it.unina.magazzino.boundary.utils.StyleWMS;
-
 import it.unina.magazzino.control.LoginController;
-
-import it.unina.magazzino.control.ProdottoController;
 import it.unina.magazzino.entity.Operatore;
-import it.unina.magazzino.entity.Prodotto;
 import it.unina.magazzino.entity.Responsabile;
 import it.unina.magazzino.entity.Utente;
 
@@ -15,8 +11,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
 
 public class LoginPage extends JFrame {
 
@@ -33,11 +27,9 @@ public class LoginPage extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        // Sfondo generale
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(StyleWMS.BIANCO);
 
-        // Header con BLU_ACCIAIO
         JPanel header = new JPanel();
         header.setBackground(StyleWMS.BLU_ACCIAIO);
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -57,7 +49,6 @@ public class LoginPage extends JFrame {
         header.add(Box.createVerticalStrut(6));
         header.add(sub);
 
-        // Form centrale
         JPanel form = new JPanel();
         form.setBackground(StyleWMS.BIANCO);
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
@@ -77,26 +68,21 @@ public class LoginPage extends JFrame {
         stilizza(txtPassword);
         form.add(txtPassword);
 
-
         form.add(Box.createVerticalStrut(28));
 
-        // Bottone con Animazione Hover
+        // bottone con sfondo dinamico: cambia colore al passaggio del mouse
         btnAccedi = new JButton("Accedi") {
             private boolean hovered = false;
-
             {
                 addMouseListener(new MouseAdapter() {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
                     @Override public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
                 });
             }
-
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Sfondo dinamico al passaggio del mouse
                 g2.setColor(hovered ? StyleWMS.BLU_ACCIAIO : StyleWMS.BLU_MEDIO);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
                 g2.dispose();
@@ -112,7 +98,8 @@ public class LoginPage extends JFrame {
         btnAccedi.setFocusPainted(false);
         btnAccedi.setBorderPainted(false);
         btnAccedi.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        // Label errore inline (nascosta di default)
+
+        // label errore nascosta di default, viene mostrata solo in caso di credenziali errate
         lblErrore = new JLabel("");
         lblErrore.setFont(new Font("Segoe UI", Font.BOLD, 12));
         lblErrore.setForeground(Color.RED);
@@ -124,7 +111,7 @@ public class LoginPage extends JFrame {
 
         form.add(Box.createVerticalStrut(15));
 
-        // Frase di reindirizzamento alla registrazione
+        // pannello con il link alla registrazione per chi non ha ancora un account
         JPanel pnlRegistrati = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         pnlRegistrati.setBackground(StyleWMS.BIANCO);
         pnlRegistrati.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -139,18 +126,16 @@ public class LoginPage extends JFrame {
         lblLink.setForeground(StyleWMS.BLU_MEDIO);
         lblLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Hover effect e click per il link
+        // hover e click sul link: porta alla RegistrationPage
         lblLink.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
                 lblLink.setForeground(StyleWMS.BLU_ACCIAIO);
             }
-
             @Override
             public void mouseExited(MouseEvent e) {
                 lblLink.setForeground(StyleWMS.BLU_MEDIO);
             }
-
             @Override
             public void mouseClicked(MouseEvent e) {
                 dispose();
@@ -162,24 +147,24 @@ public class LoginPage extends JFrame {
         pnlRegistrati.add(lblLink);
         form.add(pnlRegistrati);
 
-        // Assemblaggio
         root.add(header, BorderLayout.NORTH);
         root.add(form,   BorderLayout.CENTER);
         setContentPane(root);
 
-        // Listener Login
+        // premendo invio si attiva il bottone accedi senza cliccare
         getRootPane().setDefaultButton(btnAccedi);
         btnAccedi.addActionListener(e -> {
             String email = txtEmail.getText().trim();
             String password = new String(txtPassword.getPassword());
 
-            // Nascondi errore precedente
+            // nasconde l'eventuale errore mostrato al tentativo precedente
             lblErrore.setVisible(false);
 
             LoginController loginController = new LoginController();
             try {
                 Utente utenteLoggato = loginController.effettuaLogin(email, password);
 
+                // in base al ruolo apre la dashboard corretta
                 if (utenteLoggato instanceof Operatore) {
                     DashboardOperatore dashboardOperatore = new DashboardOperatore((Operatore) utenteLoggato, "");
                     dashboardOperatore.setVisible(true);
@@ -190,14 +175,13 @@ public class LoginPage extends JFrame {
                             JOptionPane.INFORMATION_MESSAGE);
                     DashboardResponsabile dashboardResponsabile = new DashboardResponsabile((Responsabile) utenteLoggato, "");
                     dashboardResponsabile.setVisible(true);
-
-                    SwingUtilities.invokeLater(() -> mostraNotificaSeScenario(dashboardResponsabile));
                 }
 
-                this.dispose(); // chiude solo in caso di successo
+                // chiude la loginpage solo se il login è andato a buon fine
+                this.dispose();
 
             } catch (Exception ex) {
-                // Mostra errore inline, svuota password, NON chiude la finestra
+                // mostra l'errore inline, svuota la password e rimane sulla pagina per un eventuale altro inserimento
                 lblErrore.setText("<html><span style='color:red;'>⚠ " + ex.getMessage() + "</span></html>");
                 lblErrore.setVisible(true);
                 txtPassword.setText("");
@@ -206,26 +190,7 @@ public class LoginPage extends JFrame {
         });
     }
 
-    private void mostraNotificaSeScenario(DashboardResponsabile dashboardResponsabile) {
-
-        try {
-            List<Prodotto> tutti = new ProdottoController().getAllProdotti();
-            if(tutti == null) return;
-
-            List<Prodotto> prodottiCritici = new ArrayList<>();
-            for(Prodotto p : tutti){
-                if(p.isSottoScorta()) prodottiCritici.add(p);
-            }
-
-            if(!prodottiCritici.isEmpty()){
-                NotificaSottoScorta notifica = new NotificaSottoScorta(dashboardResponsabile, prodottiCritici);
-                notifica.mostra();
-            }
-        } catch (Exception ignored){}
-
-
-    }
-
+    // crea un'etichetta stilizzata per i campi del form
     private JLabel label(String testo) {
         JLabel l = new JLabel(testo);
         l.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -234,6 +199,7 @@ public class LoginPage extends JFrame {
         return l;
     }
 
+    // applica lo stile uniforme a tutti i campi di testo del form
     private void stilizza(JTextField c) {
         c.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         c.setAlignmentX(Component.LEFT_ALIGNMENT);

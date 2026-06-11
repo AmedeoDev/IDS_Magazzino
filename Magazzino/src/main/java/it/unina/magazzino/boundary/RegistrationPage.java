@@ -27,11 +27,9 @@ public class RegistrationPage extends JFrame {
         setLocationRelativeTo(null);
         setResizable(false);
 
-        /* ── Sfondo generale ── */
         JPanel root = new JPanel(new BorderLayout());
         root.setBackground(StyleWMS.BIANCO);
 
-        // Header con BLU_ACCIAIO
         JPanel header = new JPanel();
         header.setBackground(StyleWMS.BLU_ACCIAIO);
         header.setLayout(new BoxLayout(header, BoxLayout.Y_AXIS));
@@ -51,7 +49,6 @@ public class RegistrationPage extends JFrame {
         header.add(Box.createVerticalStrut(6));
         header.add(sub);
 
-        // Form centrale
         JPanel form = new JPanel();
         form.setBackground(StyleWMS.BIANCO);
         form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
@@ -99,6 +96,7 @@ public class RegistrationPage extends JFrame {
 
         form.add(label("Ruolo"));
         form.add(Box.createVerticalStrut(5));
+        // la prima opzione è un placeholder non selezionabile come ruolo valido
         cmbRuolo = new JComboBox<>(new String[]{"-- Seleziona --", "Operatore", "Responsabile"});
         cmbRuolo.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         cmbRuolo.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -108,23 +106,19 @@ public class RegistrationPage extends JFrame {
 
         form.add(Box.createVerticalStrut(24));
 
-        // Bottone con Animazione Hover
+        // bottone con sfondo dinamico: cambia colore al passaggio del mouse
         btnRegistrati = new JButton("Registrati") {
             private boolean hovered = false;
-
             {
                 addMouseListener(new MouseAdapter() {
                     @Override public void mouseEntered(MouseEvent e) { hovered = true;  repaint(); }
                     @Override public void mouseExited(MouseEvent e)  { hovered = false; repaint(); }
                 });
             }
-
             @Override
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                // Sfondo dinamico: BLU_ACCIAIO al passaggio del mouse
                 g2.setColor(hovered ? StyleWMS.BLU_ACCIAIO : StyleWMS.BLU_MEDIO);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
                 g2.dispose();
@@ -144,7 +138,7 @@ public class RegistrationPage extends JFrame {
 
         form.add(Box.createVerticalStrut(15));
 
-        // Frase di reindirizzamento al Login
+        // link per chi ha già un account: riporta alla LoginPage
         JPanel pnlLogin = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         pnlLogin.setBackground(StyleWMS.BIANCO);
         pnlLogin.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -159,18 +153,12 @@ public class RegistrationPage extends JFrame {
         lblLink.setForeground(StyleWMS.BLU_MEDIO);
         lblLink.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
-        // Hover effect e click per il link di login
+        // hover e click sul link: chiude la registrazione e apre il login
         lblLink.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseEntered(MouseEvent e) {
-                lblLink.setForeground(StyleWMS.BLU_ACCIAIO);
-            }
-
+            public void mouseEntered(MouseEvent e) { lblLink.setForeground(StyleWMS.BLU_ACCIAIO); }
             @Override
-            public void mouseExited(MouseEvent e) {
-                lblLink.setForeground(StyleWMS.BLU_MEDIO);
-            }
-
+            public void mouseExited(MouseEvent e)  { lblLink.setForeground(StyleWMS.BLU_MEDIO); }
             @Override
             public void mouseClicked(MouseEvent e) {
                 dispose();
@@ -182,7 +170,7 @@ public class RegistrationPage extends JFrame {
         pnlLogin.add(lblLink);
         form.add(pnlLogin);
 
-        // Assemblaggio
+        // scroll sul form perché su schermi piccoli i campi potrebbero non entrare tutti
         JScrollPane scroll = new JScrollPane(form);
         scroll.setBorder(null);
         scroll.getVerticalScrollBar().setUnitIncrement(10);
@@ -192,35 +180,36 @@ public class RegistrationPage extends JFrame {
         setContentPane(root);
 
         btnRegistrati.addActionListener(e -> {
-
-            String nome = txtNome.getText();
-            String cognome = txtCognome.getText();
-            String email = txtEmail.getText();
-            String password = new String(txtPassword.getPassword());
+            String nome             = txtNome.getText();
+            String cognome          = txtCognome.getText();
+            String email            = txtEmail.getText();
+            String password         = new String(txtPassword.getPassword());
             String confermaPassword = new String(txtConfermaPassword.getPassword());
-
-            String ruolo = (String)cmbRuolo.getSelectedItem();
+            String ruolo            = (String) cmbRuolo.getSelectedItem();
 
             RegistrationController regController = new RegistrationController();
 
-            try{
+            try {
+                // il controller valida i dati e registra l'utente nel database
                 regController.registraNuovoUtente(nome, cognome, email, password, confermaPassword, ruolo);
                 JOptionPane.showMessageDialog(this,
                         "Registrazione completata con successo!\nOra puoi accedere alla piattaforma!",
                         "Benvenuto in WMS!",
                         JOptionPane.INFORMATION_MESSAGE);
+                // registrazione riuscita: torna al login
                 this.dispose();
                 new LoginPage().setVisible(true);
-            } catch (Exception ex){
+            } catch (Exception ex) {
+                // mostra il messaggio di validazione restituito dal controller
                 JOptionPane.showMessageDialog(this,
                         ex.getMessage(),
                         "Errore durante la registrazione",
                         JOptionPane.ERROR_MESSAGE);
             }
-
         });
     }
 
+    // crea un'etichetta stilizzata per i campi del form
     private JLabel label(String testo) {
         JLabel l = new JLabel(testo);
         l.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -229,6 +218,7 @@ public class RegistrationPage extends JFrame {
         return l;
     }
 
+    // applica lo stile uniforme a tutti i campi di testo del form
     private void stilizza(JTextField c) {
         c.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         c.setAlignmentX(Component.LEFT_ALIGNMENT);

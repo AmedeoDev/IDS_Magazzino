@@ -19,38 +19,28 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Schermata "Registra Carico".
- *
- * Flusso:
- *   1. L'operatore visualizza il catalogo dei prodotti in magazzino.
- *   2. Seleziona il prodotto desiderato dalla lista.
- *   3. Inserisce la quantità da aggiungere.
- *   4. Conferma: la quantità viene sommata alla disponibilità corrente.
- */
 public class RegistraCarico extends JFrame {
 
-    // ── Modello dati (in un progetto reale verrebbe dal DAO) ──────
-    /** Mappa SKU → {nome, quantitàCorrente}. **/
+    // mappa SKU → {nome, quantitàCorrente, sogliaMinima} caricata dal DB
     private final Map<String, String[]> catalogo = new LinkedHashMap<>();
 
     private Operatore operatoreLogged;
 
-    // ── Componenti UI ─────────────────────────────────────────────
     private DefaultListModel<String> listModel;
-    private JList<String>            productList;
-    private JLabel                   lblProdottoScelto;
-    private JLabel                   lblDisponibilitaCorrente;
-    private JTextField               txtQuantita;
-    private JButton                  btnConferma;
-    private JButton                  btnDashboard;
+    private JList<String> productList;
+    private JLabel lblProdottoScelto;
+    private JLabel lblDisponibilitaCorrente;
+    private JTextField txtQuantita;
+    private JButton btnConferma;
+    private JButton btnDashboard;
 
-    /** SKU del prodotto attualmente selezionato, null se nessuno. */
+    // SKU (ID) del prodotto selezionato nella lista, null se nessuno è selezionato
     private String skuSelezionato = null;
 
-    // ── Costruttore ───────────────────────────────────────────────
     public RegistraCarico(Operatore operatore) {
         this.operatoreLogged = operatore;
+
+        // carica i prodotti dal DB prima di costruire l'interfaccia
         inizializzaCatalogo();
 
         setTitle("WMS PRO – Movimento di Carico");
@@ -69,16 +59,15 @@ public class RegistraCarico extends JFrame {
         setContentPane(root);
     }
 
-    // ── Dati presi dal DB - copiato da Scarico ───────
     private void inizializzaCatalogo() {
-        // Formato: nome | quantità | sogliaMinima
+        // formato: nome | quantità corrente | soglia minima
         catalogo.clear();
         try {
             ProdottoController controller = new ProdottoController();
             List<Prodotto> inventario = controller.getAllProdotti();
 
-            if(inventario != null){
-                for(Prodotto p : inventario){
+            if (inventario != null) {
+                for (Prodotto p : inventario) {
                     catalogo.put(p.getID(), new String[]{
                             p.getNome(),
                             String.valueOf(p.getQtaDisponibile()),
@@ -91,7 +80,6 @@ public class RegistraCarico extends JFrame {
         }
     }
 
-    // ── Header blu ────────────────────────────────────────────────
     private JPanel buildHeader() {
         JPanel header = new JPanel();
         header.setBackground(StyleWMS.BLU_ACCIAIO);
@@ -114,24 +102,21 @@ public class RegistraCarico extends JFrame {
         return header;
     }
 
-    // ── Corpo principale ──────────────────────────────────────────
     private JPanel buildBody() {
         JPanel body = new JPanel();
         body.setBackground(StyleWMS.BIANCO);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(new EmptyBorder(20, 30, 10, 30));
 
-        // 1. Catalogo prodotti
         body.add(sectionLabel("1. Seleziona prodotto"));
         body.add(Box.createVerticalStrut(8));
         body.add(buildProductList());
         body.add(Box.createVerticalStrut(12));
 
-        // 2. Riepilogo prodotto selezionato
+        // riepilogo del prodotto selezionato: nome e disponibilità attuale
         body.add(buildProductSummaryPanel());
         body.add(Box.createVerticalStrut(16));
 
-        // 3. Quantità
         body.add(sectionLabel("2. Quantità da caricare"));
         body.add(Box.createVerticalStrut(6));
         txtQuantita = new JTextField();
@@ -139,16 +124,15 @@ public class RegistraCarico extends JFrame {
         body.add(txtQuantita);
         body.add(Box.createVerticalStrut(20));
 
-        // 4. Bottone conferma
         btnConferma = buildPrimaryButton("Conferma Carico");
         body.add(btnConferma);
 
+        // al click su conferma esegue la validazione e il salvataggio del movimento
         btnConferma.addActionListener(e -> onConferma());
 
         return body;
     }
 
-    // ── Lista prodotti con scroll ─────────────────────────────────
     private JScrollPane buildProductList() {
         listModel = new DefaultListModel<>();
         for (Map.Entry<String, String[]> entry : catalogo.entrySet()) {
@@ -168,6 +152,7 @@ public class RegistraCarico extends JFrame {
         productList.setBorder(new EmptyBorder(4, 8, 4, 8));
         productList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
+        // ogni volta che l'utente seleziona un prodotto aggiorna il riepilogo sotto
         productList.addListSelectionListener(this::onProductSelected);
 
         JScrollPane scroll = new JScrollPane(productList);
@@ -178,7 +163,6 @@ public class RegistraCarico extends JFrame {
         return scroll;
     }
 
-    // ── Pannello riepilogo prodotto selezionato ───────────────────
     private JPanel buildProductSummaryPanel() {
         JPanel panel = new JPanel(new GridLayout(2, 1, 0, 2));
         panel.setOpaque(false);
@@ -198,7 +182,6 @@ public class RegistraCarico extends JFrame {
         return panel;
     }
 
-    // ── Bottoni in fondo ──────────────────────────────────────────
     private JPanel buildFooterButtons() {
         JPanel panel = new JPanel();
         panel.setBackground(StyleWMS.BIANCO);
@@ -208,6 +191,7 @@ public class RegistraCarico extends JFrame {
         btnDashboard = buildSecondaryButton("Torna alla Dashboard");
         panel.add(btnDashboard);
 
+        // torna alla dashboard senza salvare nulla
         btnDashboard.addActionListener(e -> {
             this.dispose();
             new DashboardOperatore(this.operatoreLogged, "resources/assets/logoFinale.png").setVisible(true);
@@ -216,8 +200,8 @@ public class RegistraCarico extends JFrame {
         return panel;
     }
 
-    // ── Logica di selezione prodotto ──────────────────────────────
     private void onProductSelected(ListSelectionEvent e) {
+        // ignora gli eventi intermedi durante il trascinamento della selezione
         if (e.getValueIsAdjusting()) return;
         int idx = productList.getSelectedIndex();
         if (idx < 0) {
@@ -226,15 +210,15 @@ public class RegistraCarico extends JFrame {
             lblDisponibilitaCorrente.setText("");
             return;
         }
-        // Recupera lo SKU dall'indice (stesso ordine di inserimento)
+        // ricava lo SKU dall'indice: l'ordine della mappa coincide con quello della lista
         skuSelezionato = (String) catalogo.keySet().toArray()[idx];
         String[] dati = catalogo.get(skuSelezionato);
         lblProdottoScelto.setText(dati[0] + "  [" + skuSelezionato + "]");
         lblDisponibilitaCorrente.setText("Disponibilità attuale: " + dati[1] + " unità");
     }
 
-    // ── Logica conferma carico ────────────────────────────────────
     private void onConferma() {
+        // verifica che l'utente abbia selezionato un prodotto
         if (skuSelezionato == null) {
             JOptionPane.showMessageDialog(this,
                     "Seleziona un prodotto dalla lista prima di confermare.",
@@ -242,6 +226,7 @@ public class RegistraCarico extends JFrame {
             return;
         }
 
+        // verifica che la quantità sia un intero positivo
         String qtyStr = txtQuantita.getText().trim();
         int quantita;
         try {
@@ -254,36 +239,33 @@ public class RegistraCarico extends JFrame {
             return;
         }
 
-        // Aggiorna la disponibilità nel modello dati
         String[] dati = catalogo.get(skuSelezionato);
-        int nuovaQty = Integer.parseInt(dati[1]) + quantita;
+        int nuovaQty  = Integer.parseInt(dati[1]) + quantita;
 
         try {
+            // aggiorna la quantità nel DB tramite il controller
             ProdottoController controller = new ProdottoController();
             boolean savingOk = controller.aggiornaQuantitaProdotto(skuSelezionato, nuovaQty);
 
-            if(!savingOk){
+            if (!savingOk) {
                 JOptionPane.showMessageDialog(this, "Errore di caricamento");
                 return;
             }
 
+            // registra il movimento di carico nel DB
             Movimento movimento = new Movimento(
                     quantita, new Date(System.currentTimeMillis()),
-                    "Carico",
-                    skuSelezionato, operatoreLogged.getID_Utenete()
+                    "Carico", skuSelezionato, operatoreLogged.getID_Utenete()
             );
-
             new MovimentoDAO().inserisciMovimento(movimento);
 
-        } catch (Exception ex){
+        } catch (Exception ex) {
             JOptionPane.showMessageDialog(this, "Errore DB: " + ex.getMessage(), "Errore", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-
+        // aggiorna il catalogo in memoria e la voce corrispondente nella JList
         dati[1] = String.valueOf(nuovaQty);
-
-        // Aggiorna la voce nella JList
         int idx = productList.getSelectedIndex();
         listModel.set(idx, skuSelezionato + "  |  " + dati[0] + "  (disponibili: " + dati[1] + ")");
         lblDisponibilitaCorrente.setText("Disponibilità attuale: " + dati[1] + " unità");
@@ -296,7 +278,7 @@ public class RegistraCarico extends JFrame {
         txtQuantita.setText("");
     }
 
-    // ── Builders bottoni ──────────────────────────────────────────
+    // bottone pieno blu: usato per l'azione principale
     private JButton buildPrimaryButton(String testo) {
         JButton btn = new JButton(testo) {
             private boolean hovered = false;
@@ -327,6 +309,7 @@ public class RegistraCarico extends JFrame {
         return btn;
     }
 
+    // bottone solo bordo: usato per le azioni secondarie come "torna indietro"
     private JButton buildSecondaryButton(String testo) {
         JButton btn = new JButton(testo) {
             private boolean hovered = false;
@@ -359,7 +342,6 @@ public class RegistraCarico extends JFrame {
         return btn;
     }
 
-    // ── Helpers ───────────────────────────────────────────────────
     private JLabel sectionLabel(String testo) {
         JLabel l = new JLabel(testo);
         l.setFont(new Font("Segoe UI", Font.BOLD, 13));
@@ -368,6 +350,7 @@ public class RegistraCarico extends JFrame {
         return l;
     }
 
+    // applica lo stile uniforme ai campi di testo
     private void stilizza(JTextField c) {
         c.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         c.setAlignmentX(Component.LEFT_ALIGNMENT);
