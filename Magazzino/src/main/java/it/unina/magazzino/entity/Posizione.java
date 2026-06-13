@@ -64,6 +64,7 @@ public class Posizione {
             throw new IllegalStateException("La posizione " + codicePosizione + " è disponibile!");
         }
         Prodotto prodottoRimosso = this.prodotto;
+        this.prodotto = null;
         return prodottoRimosso;
     }
 
