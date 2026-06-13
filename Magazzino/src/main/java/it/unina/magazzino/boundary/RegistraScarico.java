@@ -343,7 +343,7 @@ public class RegistraScarico extends JFrame {
         // il responsabile viene notificato in background.
         // L'operatore NON vede alcun dialogo: la gestione del riordino non gli compete.
         // PRIMA: notificaResponsabile(...) mostrava un JOptionPane all'operatore.
-        // DOPO:  chiamata silenziosa a notificaResponsabileInBackground().
+        // DOPO: chiamata silenziosa a notificaResponsabileInBackground().
         if (nuovaQty < sogliaMin) {
             notificaResponsabileInBackground(dati[0], nuovaQty, sogliaMin);
         }
