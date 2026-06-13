@@ -7,9 +7,4 @@ import it.unina.magazzino.boundary.HomePage;
 
 
 public class Main {
-    static void main() {
-
-        HomePage homePage = new HomePage();
-        homePage.setVisible(true);
-    }
 }
