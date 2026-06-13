@@ -6,18 +6,11 @@ import javax.swing.*;
 
 public class Main {
 
-    public static void main(String[] args){
+    public static void main(String[] args) throws Exception{
 
-        // inokeLater fa si che la nostra UI sia creata su un thread ad esso dedicato
+        // setLookAndFeel permette all'applicazione di usare il design del SO ospitante
+        UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(
-                        UIManager.getSystemLookAndFeelClassName()
-                );
-            } catch (Exception ignored){}
-        });
-
-        new HomePage();
+        SwingUtilities.invokeLater(() -> new HomePage().setVisible(true));
     }
 }
