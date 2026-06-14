@@ -70,9 +70,7 @@ public class RegistrationController {
 
         // 8. Creazione utente
         Utente nuovoUtente;
-
         String prefisso = ruolo.equalsIgnoreCase("OPERATORE") ? "OPE" : "RESP";
-
         String idAssociato = prefisso + "-" + String.format("%03d", generaNumeroID(prefisso));
 
         if (ruolo.equalsIgnoreCase("OPERATORE")) {
@@ -83,42 +81,21 @@ public class RegistrationController {
             throw new Exception("Ruolo selezionato non valido.");
         }
 
-        System.out.println("Registrazione avvenuta con successo...");
-        System.out.println("Nuovo utente: " + nuovoUtente.getNome() + " " + nuovoUtente.getCognome()
-                + " [ " + nuovoUtente.getID_Utenete() + " ] { " + nuovoUtente.getRuolo() + " }");
-
-        // creiamo il nuovo utente
-
-        Utente newUser = null;
-        if(ruolo.equalsIgnoreCase("OPERATORE")){
-            newUser = new Operatore(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
-        } else if(ruolo.equalsIgnoreCase("RESPONSABILE")){
-            newUser = new Responsabile(nome.trim(), cognome.trim(), email.trim(), password, idAssociato);
-        }
-
-        // N.B. ora interagiamo col database, eventuali errori ad esso legati vanno risolit qui...
-
-        try{
+        // N.B. ora interagiamo col database
+        try {
             UtenteDAO dao = new UtenteDAO();
-            boolean inserito = dao.RegistraUtente(newUser);
+            boolean inserito = dao.RegistraUtente(nuovoUtente);
 
-            if(!inserito){
+            if (!inserito) {
                 throw new Exception("Impossibile salvare l'utente, riprova più tardi");
             }
-        } catch (SQLException e){
+        } catch (SQLException e) {
             // 1062 corrisponde al codice per la ridondanza dei dati
-            if(e.getErrorCode() == 1062){
+            if (e.getErrorCode() == 1062) {
                 throw new Exception("Questa mail è associata ad un utente già registrato");
             }
-
-            // gestiamo altri errori
-            System.out.println("Errore SQL: " + e.getMessage());
-            throw new Exception("Errore di connesione al DB.");
+            throw new Exception("Errore di connessione al DB.");
         }
-
-        System.out.println("Registrazione correttamente avvenuta");
-        System.out.println("Nuovo utente salvato nel DB: " + nuovoUtente.getNome() + " " + nuovoUtente.getCognome()
-                            + " [ " + nuovoUtente.getID_Utenete() + " ] { " + nuovoUtente.getRuolo() + " }");
 
         return true;
     }
