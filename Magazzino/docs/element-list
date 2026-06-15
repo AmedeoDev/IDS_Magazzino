@@ -1,0 +1,8 @@
+it.unina.magazzino
+it.unina.magazzino.boundary
+it.unina.magazzino.boundary.utils
+it.unina.magazzino.control
+it.unina.magazzino.database
+it.unina.magazzino.entity
+it.unina.magazzino.observer
+org.example

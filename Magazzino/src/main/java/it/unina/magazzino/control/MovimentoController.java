@@ -12,7 +12,21 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Controller per la gestione dei movimenti di magazzino
+ * Coordina le operazioni di carico e scarico dei prodotti presenti
+ * */
+
 public class MovimentoController {
+
+    /**
+     * Registra un movimento di carico per un determinato prodotto
+     * @param operatoreLoggato l'operatore che ha eseguito la specifica operazione
+     * @param prodotto prodotto mosso nell'operazione
+     * @param posizione posizione nella quale il prodotto è allocato
+     * @param qta quantità movimentata del prodotto
+     * @throws Exception se la posizione specificata non è valida
+     * */
 
     public void registraCarico(Operatore operatoreLoggato, Prodotto prodotto, Posizione posizione, int qta) throws Exception{
 
@@ -37,6 +51,15 @@ public class MovimentoController {
         System.out.println("Carico registrato con successo!");
 
     }
+
+    /**
+     * Registra un movimento di Scarico
+     * @param operatoreLoggato operatore che ha eseguito l'operazione
+     * @param prodotto prodotto movimentato nell'operazione
+     * @param posizione posizione nella quale il prodotto è allocato
+     * @param qta quantità scaricata del prodotto
+     * @throws Exception se la posizione specificata non esiste
+     * */
 
     public void registraScarico(Operatore operatoreLoggato, Prodotto prodotto, Posizione posizione, int qta) throws Exception{
 
@@ -66,6 +89,12 @@ public class MovimentoController {
         System.out.println("Scarico di " + qta + " unità registrato con successo nel sistema");
 
     }
+
+    /**
+     * Restituisce lo storico dei movimenti di un singolo operatore
+     * @param idOperatore ID dell'operatore selezionato
+     * @return lista dei movimenti effettuati
+     * */
 
     public List<Movimento> getStoricoPersonale(String idOperatore){
 
@@ -115,7 +144,7 @@ public class MovimentoController {
             MovimentoDAO dao = new MovimentoDAO();
             return dao.getMovimentiOggi();
         } catch (Exception e){
-            System.out.println("Erroree getMovimentiOggi: " + e.getMessage());
+            System.out.println("Errore getMovimentiOggi: " + e.getMessage());
             return null;
         }
     }
@@ -128,13 +157,19 @@ public class MovimentoController {
         }
     }
 
-    public int countOperatoriDistantiPeriodo(int giorni){
+    public int countOperatoriDistintiPeriodo(int giorni){
         try {
             return new MovimentoDAO().countOperatoriDistintiPeriodo(giorni);
         } catch (Exception e){
             return 0;
         }
     }
+
+    /**
+     * Restituisce i dati per il grafico che mostra l'andamento del magazzino
+     * @param giorni periodo di riferimento in giorni (7, 30, 90)
+     * @return una lista di array con etichetta, carichi e scarichi
+     * */
 
     public List<String[]> getDatiGrafico(int giorni){
         try {

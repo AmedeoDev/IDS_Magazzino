@@ -7,6 +7,11 @@ import it.unina.magazzino.entity.Utente;
 
 import java.sql.SQLException;
 
+/**
+ * Controller responsabile della registrazione di nuovi utenti nel sistema
+ * Esegue la validazione dei dati inseriti prima di procedere col salvataggio
+ * */
+
 public class RegistrationController {
 
     /*
@@ -19,9 +24,20 @@ public class RegistrationController {
         Password più robusta — almeno una lettera e un numero, non solo lunghezza minima
      */
 
+    /**
+     * Valida i dati e registra un nuovo utente
+     * @param nome nome dell'utente
+     * @param cognome cognome dell'utente
+     * @param email email dell'utente
+     * @param password password dell'utente
+     * @param confermaPsw chiediamo nuovamente la password per una questione di sicurezza
+     * @param ruolo ruolo selezionato dall'utente (Responsabile / Operatore)
+     * @return true se la registrazione è andata a buon fine
+     * @throws Exception se la validazione fallisce o si verifica un errore nel DB
+     * */
+
 
     public boolean registraNuovoUtente(String nome, String cognome, String email, String password, String confermaPsw, String ruolo) throws Exception {
-
         // 1. Campi vuoti
         if (nome == null || nome.trim().isEmpty()
                 || cognome == null || cognome.trim().isEmpty()

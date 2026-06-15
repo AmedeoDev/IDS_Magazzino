@@ -1,0 +1,1 @@
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html","k":"18"},{"l":"it.unina.magazzino"},{"l":"it.unina.magazzino.boundary"},{"l":"it.unina.magazzino.boundary.utils"},{"l":"it.unina.magazzino.control"},{"l":"it.unina.magazzino.database"},{"l":"it.unina.magazzino.entity"},{"l":"it.unina.magazzino.observer"},{"l":"org.example"}];updateSearchResults();

@@ -288,7 +288,7 @@ public class AndamentoMagazzino extends JPanel {
 
         // aggiorna le KPI card con i contatori del periodo
         kpiTotLbl.setText(String.valueOf(controller.countMovimentiPeriodo(periodoSelezionato)));
-        kpiOpeLbl.setText(String.valueOf(controller.countOperatoriDistantiPeriodo(periodoSelezionato)));
+        kpiOpeLbl.setText(String.valueOf(controller.countOperatoriDistintiPeriodo(periodoSelezionato)));
 
         // recupera i dati aggregati per il grafico (granularità dipende dal periodo)
         List<String[]> dati = controller.getDatiGrafico(periodoSelezionato);

@@ -2,6 +2,11 @@ package it.unina.magazzino.entity;
 
 import java.math.BigDecimal;
 
+/**
+ * Rappresenta un prodotto presente nel magazzino
+ * Implementa la logica di gestione delle scorte e della soglia minima
+ * */
+
 public class Prodotto {
 
     private final String id;
@@ -13,6 +18,18 @@ public class Prodotto {
     private int qtaDisponibile;
     private Integer sogliaMinima;
 
+
+    /**
+     * Costruisce un nuovo prodotto con i suoi attributi completi
+     * @param id identificativo univico di ogni prodotto
+     * @param categoria categoria merceologica del prodotto
+     * @param nome nome del prodotto
+     * @param descrizione descrizione dettagliata del prodotto
+     * @param qtaDisponibile quantità attualmente disponibile del prodotto
+     * @param IdPos codice della posizione in magazzino
+     * @param IdUtenteResponsabile codice univoco del responsabile designato per il prodotto
+     * @throws IllegalArgumentException se la quantità o la soglia sono negative
+     * */
 
     public Prodotto(String id, String categoria, String nome, String descrizione, int qtaDisponibile, Integer sogliaMinima, String IdPos, String IdUtenteResponsabile){
 
@@ -54,13 +71,23 @@ public class Prodotto {
         this.sogliaMinima = sogliaMinima;
     }
 
+    /**
+     * Verifica se la quantità attuale del prodotto è inferiore alla soglia minima impostata (se presente)
+     * @return  true se la quantità disponibile è sotto scorta
+     *          false se non lo è/se non è definita una soglia minima
+     * */
+
     public boolean isSottoScorta(){
         if(this.sogliaMinima == null){
             return false;
         }
         return this.qtaDisponibile <= this.sogliaMinima;
     }
-
+    /**
+     * Aumenta la quantità disponibile del prodotto
+     * @param qta quantità da aggiungere, necessariamente maggiore di zero (0)
+     * @throws IllegalArgumentException se la quantità è minore di zero (0)
+     * */
     public void carica(int qta){
         if(qta <= 0){
             throw new IllegalArgumentException("La quantità deve essere maggiore di zero!");
@@ -68,6 +95,12 @@ public class Prodotto {
 
         this.qtaDisponibile += qta;
     }
+
+    /**
+     * Diminuisce la quantità disponibile del prodotto
+     * @param qta quantità da rimuovere, necessariamente maggiore zero (0)
+     * @throws IllegalArgumentException se la quantità è minore di zero (0)
+     * */
 
     public void scarica(int qta){
         if(qta <= 0){
@@ -89,6 +122,11 @@ public class Prodotto {
         this.descrizione = descrizione;
     }
 
+    /**
+     * Verifica se il prodotto ha esaurito le scorte
+     * @return  true se ha esaurito tutte le scorte
+     *          false altrimenti
+     * */
 
     public boolean isEmpty(){
         return this.qtaDisponibile == 0;
