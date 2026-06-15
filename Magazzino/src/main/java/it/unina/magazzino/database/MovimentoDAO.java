@@ -94,9 +94,12 @@ public class MovimentoDAO {
             stmt.setInt(1, n);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    lista.add(new Movimento(rs.getInt("IdMovimento"), rs.getInt("QtaProd"),
-                            rs.getDate("Data"), rs.getString("TipoMovimento"),
-                            rs.getString("IdProd"), rs.getString("IdUtenteOperatore"),
+                    lista.add(new Movimento(rs.getInt("IdMovimento"),
+                            rs.getInt("QtaProd"),
+                            rs.getDate("Data"),
+                            rs.getString("TipoMovimento"),
+                            rs.getString("IdUtenteOperatore"),
+                            rs.getString("IdProd"),
                             rs.getString("Nome")));
                 }
             }
