@@ -66,4 +66,18 @@ public class ProdottoTest {
                 new Prodotto("P-004", "cibo", "pane", "pane di farina bianca",
                         10, -1, "POS-A1", "RESP-001"));
     }
+
+    @Test
+    void testScaricoSuperioreAllaQtaEccezione(){
+        Prodotto pTest = new Prodotto("P-010", "Sicurezza", "Scarpe anti-infortunistica", "Scarpe da cantiere", 5, 10, "POS-A1", "RESP-001");
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> pTest.scarica(20));
+        assertEquals("Quantità insufficiente", ex.getMessage());
+    }
+
+    @Test
+    void testScaricoQtaEsatta(){
+        prodotto.scarica(50);
+        assertEquals(0, prodotto.getQtaDisponibile());
+        assertTrue(prodotto.isEmpty());
+    }
 }

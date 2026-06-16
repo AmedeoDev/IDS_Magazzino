@@ -106,6 +106,9 @@ public class Prodotto {
         if(qta <= 0){
             throw new IllegalArgumentException("La quantità deve essere maggiore di zero!");
         }
+        if(qta > this.qtaDisponibile){
+            throw new IllegalArgumentException("Quantità insufficiente");
+        }
 
         this.qtaDisponibile -= qta;
     }
